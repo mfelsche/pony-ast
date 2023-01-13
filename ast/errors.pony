@@ -39,6 +39,40 @@ struct _TypecheckStats
   var heap_alloc: USize = 0
   var stack_alloc: USize = 0
 
+
+class Error
+  let file: String val
+  let line: USize
+  let pos: USize
+  let msg: String
+  let infos: Array[Error]
+  let source_snippet: String val
+    """used for displaying the error message in the context of the source"""
+
+  new create(msg': _ErrorMsg box) =>
+    """
+    Copy out all the error information, so the ErrorMsg can be deleted afterwards
+    """
+    let file_ptr = msg'.file
+    file = recover val String.copy_cstring(file_ptr) end
+    line = msg'.line
+    pos = msg'.pos
+    let msg_ptr = msg'.msg
+    msg = recover val String.copy_cstring(msg_ptr) end
+    let src_ptr = msg'.source
+    source_snippet = recover val String.copy_cstring(src_ptr) end
+
+    var frame_ptr = msg'.frame
+    infos = Array[Error].create(0)
+    while not frame_ptr.is_none() do
+      try
+        let frame: _ErrorMsg box = frame_ptr()?
+        infos.push(Error.create(frame))
+        frame_ptr = frame.frame
+      end
+    end
+
+
 struct _ErrorMsg
   var file: Pointer[U8] val = recover val file.create() end
   var line: USize = 0
@@ -57,6 +91,18 @@ struct _Errors
   var count: USize = 0
   var immediate_report: Bool = false
   var output_stream: Pointer[I32] = output_stream.create() // FILE*
+
+  fun extract(): Array[Error] =>
+    let errs = Array[Error].create(this.count)
+    var msg_ptr: NullablePointer[_ErrorMsg] box = head
+    while not msg_ptr.is_none() do
+      try
+        let msg: _ErrorMsg box = msg_ptr()?
+        errs.push(Error.create(msg))
+        msg_ptr = msg.next
+      end
+    end
+    errs
 
 struct _Typecheck
   """

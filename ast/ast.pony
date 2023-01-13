@@ -9,7 +9,7 @@ use @ast_source[NullablePointer[_Source]](ast: _AST box)
 use @ast_line[USize](ast: _AST box)
 use @ast_pos[USize](ast: _AST box)
 
-use @ast_free[None](ast: _AST)
+use @ast_free[None](ast: _AST box)
 // only free the AST if it has no parent
 use @ast_free_unattached[None](ast: _AST)
 // only for string or id
@@ -141,6 +141,22 @@ class ref AST
   fun box children(): _ASTChildIter =>
     _ASTChildIter(this)
 
+  fun box source(): NullablePointer[_Source] =>
+    """
+    The source struct for this AST.
+    Will only return a non-NULL pointer
+    if this AST represents a module
+    """
+    @ast_source(raw)
+
+  fun box package(): NullablePointer[_Package] =>
+    """
+    The package struct for this AST.
+    Will only return a non-NULL pointer
+    if this AST represents a package
+    """
+    @ast_data[NullablePointer[_Package]](raw)
+
   fun ast_type(): (AST | None) =>
     try
       AST(@ast_type(raw)()?)
@@ -191,17 +207,15 @@ class ref AST
 
 
 class _ASTChildIter is Iterator[AST]
-  let _parent: _AST box
-  var _child: NullablePointer[_AST]
+  var _child: (AST | None)
 
   new ref create(ast: AST box) =>
-    _parent = ast.raw
-    _child = @ast_child(ast.raw)
+    _child = ast.child()
 
   fun ref has_next(): Bool =>
-    not _child.is_none()
+    _child isnt None
 
   fun ref next(): AST ? =>
-    let child = _child()?
-    _child = @ast_sibling(child)
-    AST.create(child)
+    let child = _child as AST
+    _child = child.sibling()
+    child
