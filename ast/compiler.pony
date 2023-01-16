@@ -13,7 +13,7 @@ primitive Compiler
     end
 
     @codegen_pass_init(pass_opt)
-    // this will load PONY_PATH from env
+    // this will load PONYPATH from env
     @package_init(pass_opt)
 
     // TODO: parse builtin before and keep it around, so we don't need to
