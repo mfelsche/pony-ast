@@ -1,7 +1,6 @@
 use "lib:ponyc-standalone" if posix or osx
 // windows is not supported yet
 use "lib:c++" if osx
-use "lib:z" if osx
 use "files"
 
 use @stringtab_init[None]()
