@@ -1,4 +1,4 @@
-# Pony-AST
+# Pony-AST :horse: :deciduous_tree:
 
 Pony library wrapping `libponyc` via C-FFI, so Pony programs can finally compile themselves. :horse: :point_right: :horse:
 
