@@ -5,30 +5,30 @@ use @errors_get_first[NullablePointer[_ErrorMsg]](errors: _Errors)
 use @errors_get_count[USize](errors: _Errors)
 
 struct _TypecheckFrame
-  var package: NullablePointer[_AST] ref = package.none()
-  var module: NullablePointer[_AST] ref = module.none()
-  var ttype: NullablePointer[_AST] ref = ttype.none()
-  var constraint: NullablePointer[_AST] ref = constraint.none()
-  var provides: NullablePointer[_AST] ref = provides.none()
-  var method: NullablePointer[_AST] ref = method.none()
-  var def_arg: NullablePointer[_AST] ref = def_arg.none()
-  var method_body: NullablePointer[_AST] ref = method_body.none()
-  var method_params: NullablePointer[_AST] ref = method_params.none()
-  var method_type: NullablePointer[_AST] ref = method_type.none()
-  var ffi_type: NullablePointer[_AST] ref = ffi_type.none()
-  var as_type: NullablePointer[_AST] ref = as_type.none()
-  var the_case: NullablePointer[_AST] ref = the_case.none()
-  var pattern: NullablePointer[_AST] ref = pattern.none()
-  var loop: NullablePointer[_AST] ref = loop.none()
-  var loop_cond: NullablePointer[_AST] ref = loop_cond.none()
-  var loop_body: NullablePointer[_AST] ref = loop_body.none()
-  var loop_else: NullablePointer[_AST] ref = loop_else.none()
-  var try_expr: NullablePointer[_AST] ref = try_expr.none()
-  var rrecover: NullablePointer[_AST] ref = rrecover.none()
-  var ifdef_cond: NullablePointer[_AST] ref = ifdef_cond.none()
-  var ifdef_clause: NullablePointer[_AST] ref = ifdef_clause.none()
-  var iftype_constraint: NullablePointer[_AST] ref = iftype_constraint.none()
-  var iftype_body: NullablePointer[_AST] ref = iftype_body.none()
+  var package: Pointer[_AST] ref = package.create()
+  var module: Pointer[_AST] ref = module.create()
+  var ttype: Pointer[_AST] ref = ttype.create()
+  var constraint: Pointer[_AST] ref = constraint.create()
+  var provides: Pointer[_AST] ref = provides.create()
+  var method: Pointer[_AST] ref = method.create()
+  var def_arg: Pointer[_AST] ref = def_arg.create()
+  var method_body: Pointer[_AST] ref = method_body.create()
+  var method_params: Pointer[_AST] ref = method_params.create()
+  var method_type: Pointer[_AST] ref = method_type.create()
+  var ffi_type: Pointer[_AST] ref = ffi_type.create()
+  var as_type: Pointer[_AST] ref = as_type.create()
+  var the_case: Pointer[_AST] ref = the_case.create()
+  var pattern: Pointer[_AST] ref = pattern.create()
+  var loop: Pointer[_AST] ref = loop.create()
+  var loop_cond: Pointer[_AST] ref = loop_cond.create()
+  var loop_body: Pointer[_AST] ref = loop_body.create()
+  var loop_else: Pointer[_AST] ref = loop_else.create()
+  var try_expr: Pointer[_AST] ref = try_expr.create()
+  var rrecover: Pointer[_AST] ref = rrecover.create()
+  var ifdef_cond: Pointer[_AST] ref = ifdef_cond.create()
+  var ifdef_clause: Pointer[_AST] ref = ifdef_clause.create()
+  var iftype_constraint: Pointer[_AST] ref = iftype_constraint.create()
+  var iftype_body: Pointer[_AST] ref = iftype_body.create()
 
   var prev: NullablePointer[_TypecheckFrame] ref = prev.none()
 
@@ -41,26 +41,51 @@ struct _TypecheckStats
 
 
 class Error
-  let file: String val
+  let file: (String val | None)
+    """
+    Absolute path to the file containing this error.
+
+    Is `None` for errors without file context.
+    """
   let line: USize
   let pos: USize
   let msg: String
+    """
+    Error Message.
+    """
   let infos: Array[Error]
-  let source_snippet: String val
-    """used for displaying the error message in the context of the source"""
+    """
+    Additional informational messages, possibly with a file context.
+    """
+  let source_snippet: (String val | None)
+    """
+    Used for displaying the error message in the context of the source.
+
+    Is `None` for errors without file context.
+    """
 
   new create(msg': _ErrorMsg box) =>
     """
     Copy out all the error information, so the ErrorMsg can be deleted afterwards
     """
     let file_ptr = msg'.file
-    file = recover val String.copy_cstring(file_ptr) end
+    file =
+      if file_ptr.is_null() then
+        None
+      else
+        recover val String.copy_cstring(file_ptr) end
+      end
     line = msg'.line
     pos = msg'.pos
     let msg_ptr = msg'.msg
     msg = recover val String.copy_cstring(msg_ptr) end
     let src_ptr = msg'.source
-    source_snippet = recover val String.copy_cstring(src_ptr) end
+    source_snippet =
+      if src_ptr.is_null() then
+        None
+      else
+        recover val String.copy_cstring(src_ptr) end
+      end
 
     var frame_ptr = msg'.frame
     infos = Array[Error].create(0)
@@ -71,6 +96,20 @@ class Error
         frame_ptr = frame.frame
       end
     end
+
+  new message(message': String val) =>
+    """
+    Create an error with file context, only containing the given `message`.
+    """
+    file = None
+    line = 0
+    pos = 0
+    msg = message'
+    source_snippet = None
+    infos = Array[Error].create(0)
+
+  fun has_file_context(): Bool =>
+    (file isnt None) and (line > 0) and (pos > 0)
 
 
 struct _ErrorMsg

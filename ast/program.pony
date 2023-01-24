@@ -8,9 +8,9 @@ use @stringtab_done[None]()
 
 use @program_create[_Program]()
 use @program_free[None](program: _Program)
-use @program_load[NullablePointer[_AST]](path: Pointer[U8] tag, opt: _PassOpt)
+use @program_load[Pointer[_AST]](path: Pointer[U8] tag, opt: _PassOpt)
 
-use @printf[None](s: Pointer[U8] tag)
+use @printf[None](s: Pointer[U8] tag, ...)
 
 struct _Program
 
@@ -40,7 +40,7 @@ class Program
     match ast.child()
     | let p_ast: AST =>
       try
-        Package.create(p_ast)?
+        Package.create(this, p_ast)?
       end
     end
 
@@ -53,5 +53,7 @@ class Program
     _PackageIter.create(this)
 
   fun _final() =>
-    @ast_free(ast.raw)
+    if not ast.raw.is_null() then
+      @ast_free(ast.raw)
+    end
 

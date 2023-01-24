@@ -3,6 +3,46 @@ use "term"
 use "cli"
 use "files"
 
+actor CompilerActor
+
+  var package: (Package | None) = None
+
+  be compile(path: FilePath, env: Env) =>
+    env.out.print("compiling...")
+    match Compiler.compile(env, path)
+    | let p: Program =>
+      package = try
+        p.package() as Package
+      end
+      env.out.print("OK")
+
+    | let errs: Array[Error] =>
+      env.err.print("Found " + ANSI.bold(true) + ANSI.red() + errs.size().string() + ANSI.reset() + " Errors:")
+      for err in errs.values() do
+        match err.file
+        | let file: String val =>
+          env.err.print(
+            "[ " +
+            file +
+            ":" +
+            err.line.string() +
+            ":" +
+            err.pos.string() +
+            " ] " +
+            ANSI.bold(true) +
+            err.msg +
+            ANSI.reset()
+          )
+        | None =>
+          env.err.print(
+            ANSI.bold(true) +
+            err.msg +
+            ANSI.reset()
+          )
+        end
+      end
+    end
+
 actor Main
   new create(env: Env) =>
     let cs =
@@ -31,14 +71,12 @@ actor Main
     if dir.size() == 0 then
       dir = "."
     end
-    match Compiler.compile(env, FilePath(FileAuth(env.root), dir))
-    | let p: Program =>
-      env.out.print("OK")
+    var rounds: USize = 4
+    let path = FilePath(FileAuth(env.root), dir)
+    let ca = CompilerActor
+    while rounds > 0 do
+      ca.compile(path, env)
 
-    | let errs: Array[Error] =>
-      env.err.print("Found " + ANSI.bold(true) + ANSI.red() + errs.size().string() + ANSI.reset() + " Errors:")
-      for err in errs.values() do
-        env.err.print("[ " + err.file + ":" + err.line.string() + ":" + err.pos.string() + " ] " + ANSI.bold(true) + err.msg + ANSI.reset())
-      end
+      rounds = rounds - 1
     end
 

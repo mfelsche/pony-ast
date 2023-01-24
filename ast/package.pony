@@ -10,7 +10,12 @@ class Package
   let qualified_name: String val
   let path: String val
 
-  new create(ast': AST) ? =>
+  // this one is just kept around so the underlying AST is not lost
+  // it is reaped when the Program is collected by GC
+  let _program: Program box
+
+  new create(program: Program box, ast': AST) ? =>
+    _program = program
     ast = ast'
     let package: _Package = ast.package().apply()?
     let q_name_ptr = package.qualified_name
@@ -18,14 +23,24 @@ class Package
     let path_ptr = package.path
     path = recover val String.copy_cstring(path_ptr) end
 
+  fun module(): (Module | None) =>
+    match ast.child()
+    | let m_ast: AST =>
+      try
+        Module.create(this._program, m_ast)?
+      end
+    end
+
   fun modules(): Iterator[Module] =>
-    _ModuleIter.create(this)
+    _ModuleIter.create(_program, this)
 
 class _PackageIter is Iterator[Package]
   var _package_ast: (AST | None)
+  let _program: Program box
 
   new ref create(program: Program box) =>
     _package_ast = program.ast.child()
+    _program = program
 
   fun ref has_next(): Bool =>
     _package_ast isnt None
@@ -33,12 +48,12 @@ class _PackageIter is Iterator[Package]
   fun ref next(): Package ? =>
     let package_ast = _package_ast as AST
     _package_ast = package_ast.sibling()
-    Package.create(package_ast)?
+    Package.create(_program, package_ast)?
 
-struct _PackageSet
+primitive _PackageSet
   """STUB"""
 
-struct _PackageGroup
+primitive _PackageGroup
   """STUB"""
 
 struct _Package
@@ -54,9 +69,9 @@ struct _Package
     """directory name"""
   let symbol: Pointer[U8] val = symbol.create()
     """Wart to use for symbol names"""
-  let ast: NullablePointer[_AST] = ast.none()
-  let dependencies: NullablePointer[_PackageSet] = dependencies.none()
-  let group: NullablePointer[_PackageGroup] = group.none()
+  let ast: Pointer[_AST] = ast.create()
+  let dependencies: Pointer[_PackageSet] = dependencies.create()
+  let group: Pointer[_PackageGroup] = group.create()
   let group_index: USize = 0
   let next_hygienic_id: USize = 0
   let low_index: USize = 0

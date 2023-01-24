@@ -9,8 +9,10 @@ primitive Types
     try
       match ast.id()
       | TokenIds.tk_letref() | TokenIds.tk_varref() | TokenIds.tk_match_capture() =>
-        let def: _AST = @ast_data[NullablePointer[_AST]](ast.raw)()?
-        AST(def).ast_type_string()
+        let def: Pointer[_AST] = @ast_data[Pointer[_AST]](ast.raw)
+        if def.is_null() then
+          AST(def).ast_type_string()
+        end
       | TokenIds.tk_fletref() =>
         // e.g. x.b.method_call()
         //      ^^^-- this is a tk_fletref
@@ -24,6 +26,7 @@ primitive Types
           rhs.ast_type_string()
         end
       | TokenIds.tk_beref() =>
+        // hard-coding to implicit return type of a behavior
         "None val^"
       | TokenIds.tk_call() =>
         let parens = ast.child() as AST

@@ -1,8 +1,13 @@
 use "files"
 
 primitive Compiler
-  fun compile(env: Env, path: FilePath): (Program | Array[Error]) =>
+  fun _init() =>
     @stringtab_init()
+
+  fun _final() =>
+    @stringtab_done()
+
+  fun compile(env: Env, path: FilePath): (Program | Array[Error]) =>
     let pass_opt = _PassOpt.create()
     @pass_opt_init(pass_opt)
     pass_opt.verbosity = VerbosityLevels.quiet()
@@ -20,29 +25,20 @@ primitive Compiler
     // process it over and over
     let program_ast = @program_load(path.path.cstring(), pass_opt)
     let res =
-      if program_ast.is_none() then
+      if program_ast.is_null() then
         try
           let errors = pass_opt.check.errors()?
           errors.extract() // extracts an array of errors
         else
-          Array[Error].create(0)
+          [
+            Error.message("Compilation failed but libponyc produced no error messages.")
+          ]
         end
       else
-        try
-          Program.create(AST(program_ast()?))
-        else
-          Array[Error].create(0)
-        end
-        //let package = @ast_child(program_ast()?)()?
-
-        //let ast_type = get_type_at("/home/mat/dev/pony/pony-ast/examples/main.pony", line, column, package)
-        //env.out.print("Type: " + ast_type.string())
-        //@ast_print(program_ast()?, 80)
-        //@ast_free(program_ast()?)
+        Program.create(AST(program_ast))
       end
 
     @package_done(pass_opt)
     @codegen_pass_cleanup(pass_opt)
     @pass_opt_done(pass_opt)
-    @stringtab_done()
     res

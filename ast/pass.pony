@@ -1,17 +1,17 @@
 use @pass_opt_init[None](options: _PassOpt)
 use @pass_opt_done[None](options: _PassOpt)
-use @ast_passes_program[Bool](program: _AST, options: _PassOpt)
+use @ast_passes_program[Bool](program: Pointer[_AST], options: _PassOpt)
 
 type PassId is I32
 
-struct _StrList
+primitive _StrList
   """STUB"""
 
-struct _MagicPackage
+primitive _MagicPackage
   """STUB"""
 
 
-struct _Plugins
+primitive _Plugins
   """STUB"""
 
 
@@ -63,9 +63,9 @@ struct _PassOpt
   var allow_test_symbols: Bool = false
   var parse_trace: Bool = false
 
-  var package_search_paths: NullablePointer[_StrList] = package_search_paths.none()
-  var safe_packages: NullablePointer[_StrList] = safe_packages.none()
-  var magic_packages: NullablePointer[_MagicPackage] = magic_packages.none()
+  var package_search_paths: Pointer[_StrList] = package_search_paths.create()
+  var safe_packages: Pointer[_StrList] = safe_packages.create()
+  var magic_packages: Pointer[_MagicPackage] = magic_packages.create()
 
   var argv0: Pointer[U8] tag = argv0.create()
   var all_args: Pointer[U8] val = recover val all_args.create() end
@@ -85,7 +85,7 @@ struct _PassOpt
   var features: Pointer[U8] ref = features.create()
 
   embed check: _Typecheck = check.create()
-  var plugins: NullablePointer[_Plugins] ref = plugins.none()
+  var plugins: Pointer[_Plugins] ref = plugins.create()
   var data: Pointer[None] ref = data.create() // user-defined data for unit test callbacks
 
   new ref create() => None
