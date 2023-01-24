@@ -1,6 +1,6 @@
 # Pony-AST
 
-Pony library wrapping `libponyc` via C-FFI, so Pony programs can finally compile themselves. :horse: :party:
+Pony library wrapping `libponyc` via C-FFI, so Pony programs can finally compile themselves. :horse: :point_right: :horse:
 
 ## Current Status
 
