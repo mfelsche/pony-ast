@@ -7,9 +7,9 @@ actor CompilerActor
 
   var package: (Package | None) = None
 
-  be compile(path: FilePath, env: Env) =>
+  be compile(env: Env, path: FilePath, search_paths: ReadSeq[String] val = []) =>
     env.out.print("compiling...")
-    match Compiler.compile(env, path)
+    match Compiler.compile(env, path, search_paths)
     | let p: Program =>
       package = try
         p.package() as Package
@@ -47,8 +47,12 @@ actor Main
   new create(env: Env) =>
     let cs =
       try
-        CommandSpec.leaf("compile", "Compile a pony program and spit out errors if any", [
-        ], [
+        CommandSpec.leaf(
+          "compile",
+          "Compile a pony program and spit out errors if any",
+          [
+            OptionSpec.string_seq("paths", "paths to add to the package search path" where short' = 'p')
+          ], [
           ArgSpec.string("directory", "The program directory")
         ])? .> add_help()?
       else
@@ -71,11 +75,13 @@ actor Main
     if dir.size() == 0 then
       dir = "."
     end
+
+    let search_paths = cmd.option("paths").string_seq()
     var rounds: USize = 4
     let path = FilePath(FileAuth(env.root), dir)
     let ca = CompilerActor
     while rounds > 0 do
-      ca.compile(path, env)
+      ca.compile(env, path, search_paths)
 
       rounds = rounds - 1
     end

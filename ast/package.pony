@@ -1,4 +1,5 @@
 use @package_init[Bool](opt: _PassOpt)
+use @package_add_paths[None](paths: Pointer[U8] tag, opy: _PassOpt)
 use @package_init_lib[Bool](opt: _PassOpt, pony_installation: Pointer[U8] tag)
 use @package_done[None](opt: _PassOpt)
 
