@@ -3,3 +3,4 @@
 /find_type
 /compile
 /*.dSYM/
+/build/

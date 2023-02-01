@@ -1,3 +1,4 @@
+use "debug"
 use @package_init[Bool](opt: _PassOpt)
 use @package_add_paths[None](paths: Pointer[U8] tag, opy: _PassOpt)
 use @package_init_lib[Bool](opt: _PassOpt, pony_installation: Pointer[U8] tag)
@@ -25,6 +26,9 @@ class Package
     path = recover val String.copy_cstring(path_ptr) end
 
   fun module(): (Module | None) =>
+    """
+    Returns the first Module in this Package
+    """
     match ast.child()
     | let m_ast: AST =>
       try
@@ -34,6 +38,19 @@ class Package
 
   fun modules(): Iterator[Module] =>
     _ModuleIter.create(_program, this)
+
+  fun find_module(file: String): (Module | None) =>
+    """
+    Find a module in this package by package directory path
+    """
+    Debug("trying to find module from: " + file)
+    for mod in modules() do
+      Debug("checking: " +  mod.file)
+      if mod.file == file then
+        Debug("found module: " + file)
+        return mod
+      end
+    end
 
 class _PackageIter is Iterator[Package]
   var _package_ast: (AST | None)

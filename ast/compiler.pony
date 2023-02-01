@@ -1,5 +1,4 @@
 use "files"
-use "cli"
 
 primitive Compiler
   """
@@ -18,36 +17,32 @@ primitive Compiler
     @stringtab_done()
 
   fun compile(
-    env: Env,
     path: FilePath,
-    package_search_paths: ReadSeq[String val] box = [])
+    package_search_paths: (String box | ReadSeq[String val] box) = [])
   : (Program | Array[Error])
   =>
     """
     Compile the pony source code at the given `path` with the paths in `package_search_paths`
-    to look for "used" packages.
+    to look for "used" packages. Those can be colon-separated lists of paths.
 
-    This function will also load the path in the `PONYPATH` environment variable,
-    if present.
+    It is commonly used with PonyPath, extracting the PONYPATH environment variable.
     """
     let pass_opt = _PassOpt.create()
     @pass_opt_init(pass_opt)
     pass_opt.verbosity = VerbosityLevels.quiet()
     pass_opt.limit = PassIds.expr()
     pass_opt.release = false
-    try
-      pass_opt.argv0 = env.args(0)?.cstring()
-    end
 
     @codegen_pass_init(pass_opt)
-    let env_vars = EnvVars(env.vars)
-    try
-      let pony_path = env_vars("PONYPATH")?
-      @package_add_paths(pony_path.cstring(), pass_opt)
-    end
     // avoid calling package_init
-    for search_path in package_search_paths.values() do
-      @package_add_paths(search_path.cstring(), pass_opt)
+    // get the search paths from the arguments
+    match package_search_paths
+    | let single: String box =>
+      @package_add_paths(single.cstring(), pass_opt)
+    | let multiple: ReadSeq[String val] box =>
+      for search_path in multiple.values() do
+        @package_add_paths(search_path.cstring(), pass_opt)
+      end
     end
 
     // TODO: parse builtin before and keep it around, so we don't need to

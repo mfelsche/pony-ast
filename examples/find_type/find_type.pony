@@ -7,13 +7,20 @@ actor Main
   new create(env: Env) =>
     let cs =
       try
-        CommandSpec.leaf("find_type", "Find the type at a certain position in your pony program", [
-        ], [
-          ArgSpec.string("directory", "The program directory")
-          ArgSpec.string("file", "The file to search for a type in")
-          ArgSpec.u64("line", "The line in the source file, starts with 1")
-          ArgSpec.u64("column", "The column on the given line, starts with 1")
-        ])? .> add_help()?
+        CommandSpec.leaf(
+          "find_type",
+          "Find the type at a certain position in your pony program",
+
+          [
+            OptionSpec.string_seq("paths", "paths to add to the package search path" where short' = 'p')
+          ],
+          [
+            ArgSpec.string("directory", "The program directory")
+            ArgSpec.string("file", "The file to search for a type in")
+            ArgSpec.u64("line", "The line in the source file, starts with 1")
+            ArgSpec.u64("column", "The column on the given line, starts with 1")
+          ]
+        )? .> add_help()?
       else
         env.exitcode(-1)  // some kind of coding error
         return
@@ -52,7 +59,22 @@ actor Main
         env.err.print("Missing or invalid column")
         error
       end
-      find_type(env, program_dir, file, line.usize(), column.usize())
+      // extract PONYPATH
+      let pony_path = PonyPath(env)
+      // extract search paths from cli
+      let cli_search_paths = cmd.option("paths").string_seq()
+
+      let search_paths =
+        recover val
+          let tmp = Array[String val](cli_search_paths.size() + 1)
+          match pony_path
+          | let pp_str: String val =>
+            tmp.push(pp_str)
+          end
+          tmp.append(cli_search_paths)
+          tmp
+        end
+      find_type(env, program_dir, search_paths, file, line.usize(), column.usize())
     else
       env.exitcode(1)
     end
@@ -60,12 +82,13 @@ actor Main
   be find_type(
     env: Env,
     program_dir: FilePath,
+    search_paths: ReadSeq[String val] val,
     file: String,
     line: USize,
     column: USize)
   =>
     try
-      match Compiler.compile(env, program_dir)
+      match Compiler.compile(program_dir, search_paths)
       | let program: Program =>
         env.out.print("OK")
         let t = get_type_at(file, line, column, program.package() as Package) as String
@@ -79,10 +102,10 @@ actor Main
 
   fun get_type_at(file: String, line: USize, column: USize, package: Package): (String | None) =>
     try
-      let module = get_module(file, package) as Module
+      let module = package.find_module(file) as Module
 
-      match get_ast_at(line, column, module.ast)
-      | let ast: AST =>
+      match module.find_node_at(line, column)
+      | let ast: AST box =>
         Debug("FOUND " + TokenIds.string(ast.id()))
         Types.get_ast_type(ast)
       | None => None

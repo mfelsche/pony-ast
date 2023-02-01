@@ -1,3 +1,5 @@
+use "debug"
+
 class Module
   let ast: AST
   let file: String
@@ -14,6 +16,9 @@ class Module
     let f_ptr = source.file
     file = recover val String.copy_cstring(f_ptr) end
     len = source.len
+
+  fun find_node_at(line: USize, column: USize): (AST box | None) =>
+    ast.find_node_at(line, column)
 
 class _ModuleIter is Iterator[Module]
   var _module_ast: (AST | None)
