@@ -423,6 +423,8 @@ class ref AST
     (visitor.min(), visitor.max())
 
   fun find_node_at(line': USize, column': USize): (AST box | None) =>
+    // TODO: refine node - take some logic that is now in types.pony here
+    //                   - chose more meaningful nodes than TK_NONE or TK_ID
     let source' = source_file()
     // find a first node on or after the column and line we search for
     var result: FindNodeResult box = _find_node_at_pos(line', column')
