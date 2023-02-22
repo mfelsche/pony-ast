@@ -15,6 +15,3 @@ struct _Source
     """
     Length of the source, including the `'\0'` terminator.
     """
-
-  fun ref contents(): String box =>
-    String.from_cpointer(m, len)

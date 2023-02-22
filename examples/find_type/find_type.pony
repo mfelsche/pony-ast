@@ -104,94 +104,13 @@ actor Main
     try
       let module = package.find_module(file) as Module
 
-      match module.find_node_at(line, column)
+      let index = module.create_position_index()
+
+      match index.find_node_at(line, column)
       | let ast: AST box =>
         Debug("FOUND " + TokenIds.string(ast.id()))
         Types.get_ast_type(ast)
       | None => None
-      end
-    end
-
-
-  fun get_ast_at(line: USize, column: USize, ast: AST): (AST | None) =>
-    try
-      var child: AST = ast.child() as AST
-      while true do
-        let child_pos = child.pos()
-        Debug("Checking child " + TokenIds.string(child.id()) + " at line: " + child.line().string() + " col: " + child_pos.string())
-        if child.line() == line then
-          Debug("line " + line.string() + " found")
-          Debug("pos: " + child_pos.string() + " column: " + column.string() + " == " + (child_pos == column).string() + ", > " + (child_pos > column).string())
-
-          // check the position of the last child
-          // if it is beyond our intended column, one of the children of this
-          // node is ours
-          try
-            let last_child = child.last_child()
-            let last_child_pos = (last_child as AST).pos()
-            Debug("Last child pos: " + last_child_pos.string())
-            if (last_child_pos == column) and (last_child_pos > child_pos) then
-              return child.last_child()
-            elseif (child_pos < column) and (column < last_child_pos) then
-              // our thingy is somewhere in here
-              Debug("Descend into " + TokenIds.string(child.id()))
-              // it must be somewhere in there, no need to iterate further
-              // also return if it is None, it is here or nowhere
-              return get_ast_at(line, column, child)
-            end
-          end
-
-          // we can get the length of ids and strings
-          // use it to correctly match the token
-          match child.token_value()
-          | let s: String =>
-            // strings have at least 1 trailing quote
-            let ast_end = child.pos() + s.size() + if child.id() == TokenIds.tk_string() then 1 else 0 end
-            if (child.pos() <= column) and (column <= ast_end) then
-              return child
-            end
-          | None =>
-            if child.pos() >= column then
-              if (child.pos() == column) then
-                return child
-              elseif child.infix_node() then
-                Debug("INFIX NODE " + TokenIds.string(child.id()))
-                // infix nodes might have some lhs child that is closer to the
-                // actual position, so go inside and check
-                match get_ast_at(line, column, child)
-                | let in_child: AST => return in_child
-                | None => return child
-                end
-              else
-                // we are past our desired columns
-                // return the previous or the parent node
-                let prev = child.prev()
-                if prev is None then
-                  return ast
-                else
-                  return prev
-                end
-              end
-            end
-          end
-
-
-        end
-        // recurse to childs children
-        match get_ast_at(line, column, child)
-        | let found: AST => return found
-        end
-        child = child.sibling() as AST
-      end
-    end
-
-  fun get_module(file: String, package: Package): (Module | None) =>
-    Debug("trying to find module from: " + file)
-    for module in package.modules() do
-      Debug("checking: " +  module.file)
-      if module.file == file then
-        Debug("found module: " + file)
-        return module
       end
     end
 

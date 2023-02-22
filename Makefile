@@ -19,13 +19,14 @@ SRC_DIR ?= $(PACKAGE)
 TEST_DIR ?= tests
 EXAMPLES_DIR := examples
 coverage_binary := $(COVERAGE_DIR)/$(PACKAGE)
-tests_binary := $(BUILD_DIR)/tests
+unit_tests_binary := $(BUILD_DIR)/ast
+integration_tests_binary := $(BUILD_DIR)/tests
 docs_dir := build/$(PACKAGE)-docs
 
-SOURCE_FILES := $(shell find $(SRC_DIR) -name *.pony)
-TEST_SOURCE_FILES := $(shell find $(TEST_DIR) -name *.pony)
+SOURCE_FILES := $(shell find $(SRC_DIR) -name '*.pony')
+TEST_SOURCE_FILES := $(shell find $(TEST_DIR) -name '*.pony')
 EXAMPLES := $(notdir $(shell find $(EXAMPLES_DIR)/* -type d))
-EXAMPLES_SOURCE_FILES := $(shell find $(EXAMPLES_DIR) -name *.pony)
+EXAMPLES_SOURCE_FILES := $(shell find $(EXAMPLES_DIR) -name '*.pony')
 EXAMPLES_BINARIES := $(addprefix $(BUILD_DIR)/,$(EXAMPLES))
 
 ifdef config
@@ -40,6 +41,8 @@ else
 	PONYC = $(COMPILE_WITH) --debug
 endif
 
+test: unit-tests integration-tests build-examples
+
 build-examples: $(EXAMPLES_BINARIES)
 
 $(EXAMPLES_BINARIES): $(BUILD_DIR)/%: $(SOURCE_FILES) $(EXAMPLES_SOURCE_FILES) | $(BUILD_DIR)
@@ -51,15 +54,18 @@ clean:
 	rm -rf $(BUILD_DIR)
 	rm -rf $(COVERAGE_DIR)
 
-test: unit-tests integration-tests build-examples
 
-unit-tests: $(tests_binary)
-	$^ --exclude=integration/ --sequential
+unit-tests: $(unit_tests_binary)
+	$^ --sequential --verbose
+ 
+integration-tests: $(integration_tests_binary)
+	$^ --sequential
 
-integration-tests: $(tests_binary)
-	$^ --only=integration/ --sequential
+$(unit_tests_binary): $(SOURCE_FILES) | $(BUILD_DIR)
+	$(GET_DEPENDENCIES_WITH)
+	$(PONYC) -o $(BUILD_DIR) $(SRC_DIR)
 
-$(tests_binary): $(SOURCE_FILES) $(TEST_SOURCE_FILES) | $(BUILD_DIR)
+$(integration_tests_binary): $(SOURCE_FILES) $(TEST_SOURCE_FILES) | $(BUILD_DIR)
 	$(GET_DEPENDENCIES_WITH)
 	$(PONYC) -o $(BUILD_DIR) $(TEST_DIR)
 

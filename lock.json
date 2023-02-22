@@ -1,3 +1,8 @@
 {
-  "locks": []
+  "locks": [
+    {
+      "locator": "github.com/mfelsche/pony-binarysearch.git",
+      "revision": "v0.1.1"
+    }
+  ]
 }

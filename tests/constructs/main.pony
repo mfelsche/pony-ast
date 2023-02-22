@@ -21,10 +21,10 @@ class Foo is Snot
   """
 
   var variable: (Array[String] iso | None) = None
-  embed s: String = String.create(10)
+  embed s: String = String.create(0b10)
   let immutable: Map[String, USize]
 
-  fun bla(): U8 => U8(0x0F)
+  fun bla(): U8 => F32(0.12345e-4).u8()
 
   fun with_default(arg: String tag, len: USize = -1) =>
     None

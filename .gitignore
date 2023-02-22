@@ -4,3 +4,5 @@
 /compile
 /*.dSYM/
 /build/
+/_corral/
+/_repos/

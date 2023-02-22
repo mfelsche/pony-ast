@@ -1,5 +1,6 @@
 use "../../ast"
 use "cli"
+use "debug"
 use "files"
 use "term"
 
@@ -90,19 +91,12 @@ actor Main
 
 class _ASTLocationVisitor is ASTVisitor
   let _out: OutStream
-  var _source: String val = ""
 
   new create(out: OutStream) =>
     _out = out
 
   fun ref visit(ast: AST box): VisitResult =>
     try
-      let a_s = ast.source_file()
-      if _source.size() == 0 then
-        if a_s isnt None then
-          _source = a_s as String val
-        end
-      end
       var num_parents: USize = 0
       var parent = ast.parent()
       while parent isnt None do
@@ -110,24 +104,7 @@ class _ASTLocationVisitor is ASTVisitor
         parent = (parent as AST box).parent()
         _out.write(" ")
       end
-      let token_str =
-        match ast.id()
-        | TokenIds.tk_string() =>
-          "\"" + (ast.token_value() as String val) + "\""
-        | TokenIds.tk_id() => ast.token_value() as String val
-        else
-          TokenIds.string(ast.id())
-        end
-
-      var source: String val = ""
-      if (_source.size() > 0) and (a_s isnt None) then
-        let a_ss = (a_s as String val)
-
-        if a_ss != _source then
-          source = a_ss
-        end
-      end
-      _out.print(token_str + " @ " + ast.line().string() + ":" + ast.pos().string() + " " + source)
+      _out.print(ast.debug())
       Continue
     else
       Stop

@@ -1,9 +1,13 @@
+use "collections"
 use "debug"
+use "binarysearch"
 
 class Module
   let ast: AST
-  let file: String
+  let file: String val
+    """Absolute path to the file of this module"""
   let len: USize
+    """length of the contents in bytes"""
 
   // this one is just kept around so the underlying AST is not lost
   // it is reaped when the Program is collected by GC
@@ -17,8 +21,9 @@ class Module
     file = recover val String.copy_cstring(f_ptr) end
     len = source.len
 
-  fun find_node_at(line: USize, column: USize): (AST box | None) =>
-    ast.find_node_at(line, column)
+  fun create_position_index(): PositionIndex =>
+    PositionIndex.create(this)
+
 
 class _ModuleIter is Iterator[Module]
   var _module_ast: (AST | None)
@@ -35,4 +40,250 @@ class _ModuleIter is Iterator[Module]
     let module_ast = _module_ast as AST
     _module_ast = module_ast.sibling()
     Module.create(_program, module_ast)?
+
+
+class val _Pos is (Comparable[_Pos] & Hashable & Stringable)
+  """
+  Position in a module.
+
+  TODO: make public and use everywhere
+  """
+  let line: USize
+  let pos: USize
+
+  new val create(line': USize, pos': USize) =>
+    line = line'
+    pos = pos'
+
+  fun eq(other: box->_Pos): Bool =>
+    (line == other.line) and (pos == other.pos)
+
+  fun lt(other: box->_Pos): Bool =>
+    (line < other.line) or ((line == other.line) and (pos < other.pos))
+
+  fun hash(): USize =>
+    line.hash() xor pos.hash() // TODO: better hashing support for Pony
+
+  fun string(): String iso^ =>
+    recover iso
+      String .> append(line.string() + ":" + pos.string())
+    end
+
+
+class PositionIndex
+  // IMPORTANT: keep the reference to the module alive,
+  // as long as we keep this class around
+  let _module: Module box
+  let _index: Array[_Entry] box
+    """
+    Sorted by position
+    """
+
+  new create(module: Module box) =>
+    _module = module
+    let visitor = _PositionIndexBuilder
+    _module.ast.visit(visitor)
+    _index = visitor.index()
+
+  fun debug(out: OutStream) =>
+    for entry in _index.values() do
+      try
+        out.print(entry.best()?.debug())
+      end
+    end
+
+  fun find_node_at(line: USize, pos: USize): (AST box | None) =>
+    let needle = _Entry.empty(line, pos)
+    match BinarySearch.apply[_Entry](needle, _index)
+    | (let found_pos: USize, true) =>
+      // exact match, return the first item
+      try
+        let entry = _index(found_pos)?
+        _refine_node(entry.best()?)
+      end
+    | (let insert_pos: USize, false) =>
+      // check the index we shall insert ourselves at
+      if (insert_pos > 0) and  (_index.size() > 0) then
+        try
+          // check the entry before
+          let entry_before = _index(insert_pos - 1)?
+          for candidate in entry_before.candidates() do
+            // take the first entry that contains our position
+            let start_pos = entry_before.start
+            let end_pos =
+              match candidate.end_pos()
+              | (let l: USize, let c: USize) => _Pos(l, c)
+              else
+                error
+              end
+            if (start_pos <= needle.start) and (needle.start <= end_pos) then
+              // refine to a meaningful node
+              return _refine_node(candidate)
+            end
+          end
+        end
+      end
+    end
+
+  fun _refine_node(node: AST box): AST box =>
+    match node.id()
+    | TokenIds.tk_positionalargs() =>
+      // first child is TK_SEQ, first child of which is the first param
+      try (node.child() as AST box).child() end // go to first parameter
+    | TokenIds.tk_none() =>
+      try
+        let parent' = node.parent() as AST
+        match parent'.id()
+        | TokenIds.tk_fun() | TokenIds.tk_be() | TokenIds.tk_new()
+        | TokenIds.tk_use()
+        | TokenIds.tk_nominal() =>
+          return parent'
+        end
+      end
+    | TokenIds.tk_id() =>
+      match node.parent()
+      | let parent': AST box =>
+        match parent'.id()
+        | TokenIds.tk_param() // name of a parameter
+        | TokenIds.tk_fun() | TokenIds.tk_be() | TokenIds.tk_new() // function name
+        | TokenIds.tk_funref() | TokenIds.tk_beref() | TokenIds.tk_newref() | TokenIds.tk_newberef() // reference to function
+        | TokenIds.tk_funchain() | TokenIds.tk_bechain()
+        | TokenIds.tk_typeref() // reference to type
+        | TokenIds.tk_nominal() // name of a type
+        | TokenIds.tk_flet() | TokenIds.tk_fvar() | TokenIds.tk_embed() // fields
+        | TokenIds.tk_fletref() | TokenIds.tk_fvarref() | TokenIds.tk_embedref() // references to fields
+        | TokenIds.tk_paramref()
+        | TokenIds.tk_var() | TokenIds.tk_let() // local variables
+        => return parent'
+        else
+          Debug("Parent unknown: " + TokenIds.string(parent'.id()))
+        end
+      end
+    | TokenIds.tk_seq() | TokenIds.tk_params() =>
+      // assuming when we get a seq (a block of expressions) or params
+      // we almost always want the first element
+      node.child()
+    | TokenIds.tk_tag() | TokenIds.tk_iso() | TokenIds.tk_trn() | TokenIds.tk_val() | TokenIds.tk_box() | TokenIds.tk_ref() =>
+      // capabilities on types go to the type
+      // capabilities on definitions go to the definition
+      match node.parent()
+      | let parent': AST box =>
+        match parent'.id()
+        | TokenIds.tk_actor() | TokenIds.tk_class() | TokenIds.tk_struct()
+        | TokenIds.tk_primitive() | TokenIds.tk_trait() | TokenIds.tk_interface()
+        | TokenIds.tk_nominal()
+        | TokenIds.tk_new() | TokenIds.tk_fun() | TokenIds.tk_be() =>
+          return parent'
+        end
+      end
+    end
+    node
+
+class ref _PositionIndexBuilder is ASTVisitor
+  let _index: Array[_Entry] ref
+
+  new ref create() =>
+    _index = Array[_Entry].create(128)
+
+  fun ref visit(ast: AST box): VisitResult =>
+    if not ast.is_abstract() then
+      // handle special cases
+      try
+        match ast.id()
+        | TokenIds.tk_this() =>
+          // detect synthetically added `this.` prefixed to field references and
+          // skip them, as they don't appear in the sources
+          let par = ast.parent() as AST box
+          match par.id()
+          | TokenIds.tk_fvarref() | TokenIds.tk_fletref() | TokenIds.tk_embedref() =>
+            let sibl = ast.sibling() as AST box
+            if _Pos(ast.line(), ast.pos()) == _Pos(sibl.line(), sibl.pos()) then
+              return Continue
+            end
+          end
+        | TokenIds.tk_fvarref() | TokenIds.tk_fletref() | TokenIds.tk_embedref() =>
+          // exclude artificially created field access nodes,
+          // added when a field is referenced without explicit `this.`
+          let pos = _Pos(ast.line(), ast.pos())
+          let rhs = (ast.child() as AST box).sibling() as AST box
+          if _Pos(rhs.line(), rhs.pos()) == pos then
+            return Continue
+          end
+        end
+      end
+      let entry = _Entry(ast)
+      match BinarySearch.apply[_Entry](entry, _index)
+      | (let pos: USize, true) =>
+        try
+          let existing = _index(pos)?
+          existing.merge(entry)
+        else
+          Debug("Binarysearch found an invalid existing position")
+        end
+      | (let pos: USize, false) =>
+        try
+          _index.insert(pos, entry)?
+        else
+          Debug("Binarysearch found an invalid insert position")
+        end
+      end
+    end
+    Continue
+
+  fun index(): this->Array[_Entry] =>
+    _index
+
+class ref _Entry is Comparable[_Entry]
+  let start: _Pos
+  let _candidates: Array[AST box] ref
+
+  new ref create(ast: AST box) =>
+    start = _Pos(ast.line(), ast.pos())
+    _candidates = Array[AST box].create(1)
+    _candidates.push(ast)
+
+  new ref empty(line: USize, pos: USize) =>
+    start = _Pos(line, pos)
+    _candidates = Array[AST box].create()
+
+  fun ref merge(other: _Entry) =>
+    for oc in other._candidates.values() do
+      _candidates.push(oc)
+    end
+
+  fun first(): AST box ? =>
+    _candidates(0)?
+
+  fun best(): AST box ? =>
+    if start == _Pos(1, 1) then
+      // nasty ponyc added a `use "builtin"` at the beginning
+      _candidates(2)?
+    elseif _candidates.size() > 1 then
+      var s = String .> append("[")
+      for c in _candidates.values() do
+        s.append(c.debug())
+        s.append(",")
+      end
+      s.append("]")
+      Debug("CANDIDATES: " + s)
+      first()?
+    else
+      // first is best
+      first()?
+    end
+
+  fun candidates(): Iterator[AST box] =>
+    _candidates.values()
+
+  fun eq(other: box->_Entry): Bool =>
+    """
+    delegated to _Pos
+    """
+    start == other.start
+
+  fun lt(other: box->_Entry): Bool =>
+    """
+    delegated to _Pos
+    """
+    start < other.start
 
