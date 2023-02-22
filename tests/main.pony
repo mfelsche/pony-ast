@@ -214,7 +214,7 @@ class iso _PositionIndexFind is UnitTest
     (27, 23, TokenIds.tk_call()) // constructor call
     (27, 24, TokenIds.tk_float()) // float literal start
     (27, 32, TokenIds.tk_float()) // float literal end
-    (27, 34, TokenIds.tk_funref()) // .u8() - the dot
+    (27, 35, TokenIds.tk_funref()) // .u8() - the dot
   ]
 
 
