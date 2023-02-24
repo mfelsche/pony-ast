@@ -1,28 +1,56 @@
+use @ponyint_hash_block[USize](ptr: Pointer[None] tag, size: USize)
 use "collections"
 use "debug"
 use "binarysearch"
 
-class Module
+class Module is (Hashable & Equatable[Module])
   let ast: AST
   let file: String val
     """Absolute path to the file of this module"""
   let len: USize
     """length of the contents in bytes"""
+  let _hash: USize
+    """
+    A hash of the module contents.
+    """
 
   // this one is just kept around so the underlying AST is not lost
   // it is reaped when the Program is collected by GC
   let _program: Program box
 
   new create(program: Program box, ast': AST) ? =>
+    """
+    Construct the module by extracting some metadata from the AST
+    """
     _program = program
     ast = ast'
     let source: _Source = ast.source().apply()?
     let f_ptr = source.file
     file = recover val String.copy_cstring(f_ptr) end
     len = source.len
-
+    _hash = @ponyint_hash_block(source.m, len)
+  
   fun create_position_index(): PositionIndex =>
     PositionIndex.create(this)
+
+  fun box hash(): USize =>
+    """Return a hash of the file contents"""
+    _hash
+    
+  fun eq(that: box->Module): Bool =>
+    """
+    Two modules are considered equal if they are from the same file
+    and the file contents are equal
+    """
+    let same_file = (this.file == that.file)
+    let same_content = 
+      match (this.ast.source_contents(), that.ast.source_contents())
+      | (let this_contents: String box, let that_contents: String box) =>
+        this_contents == that_contents
+      else
+        false
+      end  
+    same_file and same_content
 
 
 class _ModuleIter is Iterator[Module]
