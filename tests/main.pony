@@ -215,6 +215,18 @@ class iso _PositionIndexFind is UnitTest
     (27, 24, TokenIds.tk_float()) // float literal start
     (27, 32, TokenIds.tk_float()) // float literal end
     (27, 35, TokenIds.tk_funref()) // .u8() - the dot
+    (29, 50, TokenIds.tk_call()) // the -1, which was transformed to 1.neg()
+    //(30, 19, TokenIds.tk_object()) // the syntax rewrite of objects and lambdas removes this node
+    (31, 15, TokenIds.tk_flet())
+    (32, 15, TokenIds.tk_fun())
+    (33, 11, TokenIds.tk_match())
+    (33, 21, TokenIds.tk_funref())
+    (34, 11, TokenIds.tk_match_capture())
+    (34, 15, TokenIds.tk_id())
+    (34, 18, TokenIds.tk_nominal())
+    (34, 29, TokenIds.tk_call()) // call to s.gt(0)
+    (34, 36, TokenIds.tk_id())
+    //(36, 30, TokenIds.tk_chain())
   ]
 
 

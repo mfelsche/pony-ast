@@ -27,4 +27,14 @@ class Foo is Snot
   fun bla(): U8 => F32(0.12345e-4).u8()
 
   fun with_default(arg: String tag, len: USize = -1) =>
-    None
+    let obj = object
+      let field: U8 = U64(12).u8()
+      fun apply(arg: Array[String] = []): USize =>
+        match arg.size()
+        | let s: USize if s > 0 => s
+        else
+          // TODO: partial application is still a great mess
+          let applied = USize~max_value()
+          applied()
+        end
+    end
