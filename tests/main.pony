@@ -11,6 +11,7 @@ actor \nodoc\ Main is TestList
     test(_CompileSimple)
     test(_CompileRepeatedly)
     test(_PositionIndexFind)
+    test(_DefinitionTest)
     // test(_FindTypes)
 
 class \nodoc\ iso _CompileSimple is UnitTest
@@ -277,10 +278,80 @@ class iso _PositionIndexFind is UnitTest
       h.fail(
         "Compiling the constructs example failed with: " +
         try
-          e(0)?.msg + " " + e(0)?.line.string() + ":" + e(0)?.pos.string()
+          e(0)?.msg + " " + e(0)?.position.string()
         else
           "0 errors"
         end)
     end
 
 
+class \nodoc\ _DefinitionTest is UnitTest
+  let expected: Array[(Position, Position, TokenId)] val = [
+    (Position.create(7, 5), Position.create(4, 3), TokenIds.tk_fvar())
+    (Position.create(9, 16), Position.create(54, 3), TokenIds.tk_new()) // reference to constructor in a different file
+    (Position.create(9, 30), Position.create(921, 3), TokenIds.tk_fun()) // reference to function in a different file
+    (Position.create(11, 6), Position.create(6, 14), TokenIds.tk_param())
+    (Position.create(11, 10), Position.create(10, 3), TokenIds.tk_flet()) // reference to behavior in a different file
+    (Position.create(11, 15), Position.create(20, 3), TokenIds.tk_be()) // reference to behavior in a different file
+  ]
+  fun name(): String => "definition/test"
+  fun apply(h: TestHelper) =>
+    let source_dir = Path.join(Path.dir(__loc.file()), "constructs")
+    let pony_path =
+      try
+        PonyPath(h.env) as String
+      else
+        h.fail("PONYPATH not set")
+        return
+      end
+    match Compiler.compile(FilePath(FileAuth(h.env.root), source_dir), [pony_path])
+    | let p: Program =>
+      try
+        let pkg = p.package() as Package
+        h.assert_eq[String](source_dir, pkg.path)
+        let main_pony_path = Path.join(source_dir, "main.pony")
+        try
+          let module = pkg.find_module(main_pony_path) as Module
+          let index = module.create_position_index()
+          index.debug(h.env.out)
+
+          for (ref_pos, expected_def_pos, expected_def_token_id) in expected.values() do
+            match index.find_node_at(ref_pos.line(), ref_pos.column())
+            | let ast: AST box =>
+              let definition: AST = 
+                try
+                  ast.definition() as AST
+                else
+                  h.fail("No definition for node: " + ast.debug())
+                  return
+                end
+              h.assert_eq[Position](expected_def_pos, definition.position(),
+              "Definition at wrong position " + definition.debug())
+              h.assert_eq[String val](
+                TokenIds.string(expected_def_token_id),
+                TokenIds.string(definition.id()),
+                "Found wrong node " + ast.debug()
+              )
+            | None =>
+              h.fail("No AST node found at " + ref_pos.string())
+              return
+            end
+
+          end
+        else
+          h.fail("No module with file " + main_pony_path)
+          return
+        end
+      else
+        h.fail("No package, huh?")
+        return
+      end
+    | let e: Array[Error] =>
+      h.fail(
+        "Compiling the constructs example failed with: " +
+        try
+          e(0)?.msg + " " + e(0)?.position.string()
+        else
+          "0 errors"
+        end)
+    end

@@ -8,7 +8,7 @@ class Module is (Hashable & Equatable[Module])
   let file: String val
     """Absolute path to the file of this module"""
   let len: USize
-    """length of the contents in bytes"""
+    """length of the file contents in bytes"""
   let _hash: USize
     """
     A hash of the module contents.
@@ -43,13 +43,7 @@ class Module is (Hashable & Equatable[Module])
     and the file contents are equal
     """
     let same_file = (this.file == that.file)
-    let same_content = 
-      match (this.ast.source_contents(), that.ast.source_contents())
-      | (let this_contents: String box, let that_contents: String box) =>
-        this_contents == that_contents
-      else
-        false
-      end  
+    let same_content = this._hash == that._hash
     same_file and same_content
 
 
@@ -70,35 +64,12 @@ class _ModuleIter is Iterator[Module]
     Module.create(_program, module_ast)?
 
 
-class val _Pos is (Comparable[_Pos] & Hashable & Stringable)
-  """
-  Position in a module.
-
-  TODO: make public and use everywhere
-  """
-  let line: USize
-  let pos: USize
-
-  new val create(line': USize, pos': USize) =>
-    line = line'
-    pos = pos'
-
-  fun eq(other: box->_Pos): Bool =>
-    (line == other.line) and (pos == other.pos)
-
-  fun lt(other: box->_Pos): Bool =>
-    (line < other.line) or ((line == other.line) and (pos < other.pos))
-
-  fun hash(): USize =>
-    line.hash() xor pos.hash() // TODO: better hashing support for Pony
-
-  fun string(): String iso^ =>
-    recover iso
-      String .> append(line.string() + ":" + pos.string())
-    end
-
-
 class PositionIndex
+  """
+  Index for AST nodes sorted by their position in the index.
+
+
+  """
   // IMPORTANT: keep the reference to the module alive,
   // as long as we keep this class around
   let _module: Module box
@@ -138,12 +109,7 @@ class PositionIndex
           for candidate in entry_before.candidates() do
             // take the first entry that contains our position
             let start_pos = entry_before.start
-            let end_pos =
-              match candidate.end_pos()
-              | (let l: USize, let c: USize) => _Pos(l, c)
-              else
-                error
-              end
+            let end_pos = candidate.end_pos() as Position
             if (start_pos <= needle.start) and (needle.start <= end_pos) then
               // refine to a meaningful node
               return _refine_node(candidate)
@@ -225,16 +191,16 @@ class ref _PositionIndexBuilder is ASTVisitor
           match par.id()
           | TokenIds.tk_fvarref() | TokenIds.tk_fletref() | TokenIds.tk_embedref() =>
             let sibl = ast.sibling() as AST box
-            if _Pos(ast.line(), ast.pos()) == _Pos(sibl.line(), sibl.pos()) then
+            if ast.position() == sibl.position() then
               return Continue
             end
           end
         | TokenIds.tk_fvarref() | TokenIds.tk_fletref() | TokenIds.tk_embedref() =>
           // exclude artificially created field access nodes,
           // added when a field is referenced without explicit `this.`
-          let pos = _Pos(ast.line(), ast.pos())
+          let pos = ast.position()
           let rhs = (ast.child() as AST box).sibling() as AST box
-          if _Pos(rhs.line(), rhs.pos()) == pos then
+          if rhs.position() == pos then
             return Continue
           end
         end
@@ -262,16 +228,20 @@ class ref _PositionIndexBuilder is ASTVisitor
     _index
 
 class ref _Entry is Comparable[_Entry]
-  let start: _Pos
+  """
+  Entry in the PositionIndex, containing possibly multiple AST nodes per
+  position.
+  """
+  let start: Position
   let _candidates: Array[AST box] ref
 
   new ref create(ast: AST box) =>
-    start = _Pos(ast.line(), ast.pos())
+    start = ast.position()
     _candidates = Array[AST box].create(1)
     _candidates.push(ast)
 
   new ref empty(line: USize, pos: USize) =>
-    start = _Pos(line, pos)
+    start = Position(line, pos)
     _candidates = Array[AST box].create()
 
   fun ref merge(other: _Entry) =>
@@ -283,17 +253,20 @@ class ref _Entry is Comparable[_Entry]
     _candidates(0)?
 
   fun best(): AST box ? =>
-    if start == _Pos(1, 1) then
+    if start == Position(1, 1) then
       // nasty ponyc added a `use "builtin"` at the beginning
+      // chose the next node
       _candidates(2)?
     elseif _candidates.size() > 1 then
-      var s = String .> append("[")
-      for c in _candidates.values() do
-        s.append(c.debug())
-        s.append(",")
+      ifdef debug then
+        var s = String .> append("[")
+        for c in _candidates.values() do
+          s.append(c.debug())
+          s.append(",")
+        end
+        s.append("]")
+        Debug("CANDIDATES: " + s)
       end
-      s.append("]")
-      Debug("CANDIDATES: " + s)
       first()?
     else
       // first is best
@@ -305,13 +278,13 @@ class ref _Entry is Comparable[_Entry]
 
   fun eq(other: box->_Entry): Bool =>
     """
-    delegated to _Pos
+    delegated to Position
     """
     start == other.start
 
   fun lt(other: box->_Entry): Bool =>
     """
-    delegated to _Pos
+    delegated to Position
     """
     start < other.start
 

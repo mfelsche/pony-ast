@@ -1,12 +1,12 @@
-"""
-Compiler internal struct used for parsing numbers from literals in the source code.
-Both for floats, integers.
-For formats hexadecimal, binary and decimal
-"""
 // TODO: maybe use a pointer here
 use @lexint_double[F64](lexint: _LexIntT box)
 
 struct _LexIntT
+  """
+  Compiler internal struct used for parsing numbers from literals in the source code.
+  Both for floats, integers.
+  For formats hexadecimal, binary and decimal
+  """  
   let low: U64 = 0
   let high: U64 = 0
 

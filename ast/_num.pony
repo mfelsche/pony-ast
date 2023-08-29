@@ -3,7 +3,7 @@ use "debug"
 
 primitive _Num
   """
-  Utility checking the length of numbers.
+  Utility for checking the length of numbers.
   """
   fun int(src: String box, start_offset: USize, only_decimal: Bool = false): USize =>
     """

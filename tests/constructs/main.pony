@@ -22,8 +22,8 @@ class Foo is Snot
 
   var variable: (Array[String] iso | None) = None
   embed s: String = String.create(0b10)
-  let immutable: Map[String, USize]
-
+  let immutable: Map[String, USize] = Map[String, USize].create()
+ 
   fun bla(): U8 => F32(0.12345e-4).u8()
 
   fun with_default(arg: String tag, len: USize = -1) =>
@@ -38,3 +38,4 @@ class Foo is Snot
           applied()
         end
     end
+

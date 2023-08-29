@@ -71,9 +71,7 @@ actor Main
             "[ " +
             file +
             ":" +
-            err.line.string() +
-            ":" +
-            err.pos.string() +
+            err.position.string() +
             " ] " +
             ANSI.bold(true) +
             err.msg +

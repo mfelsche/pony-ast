@@ -47,8 +47,7 @@ class Error
 
     Is `None` for errors without file context.
     """
-  let line: USize
-  let pos: USize
+  let position: Position
   let msg: String
     """
     Error Message.
@@ -75,8 +74,7 @@ class Error
       else
         recover val String.copy_cstring(file_ptr) end
       end
-    line = msg'.line
-    pos = msg'.pos
+    position = Position(msg'.line, msg'.pos)
     let msg_ptr = msg'.msg
     msg = recover val String.copy_cstring(msg_ptr) end
     let src_ptr = msg'.source
@@ -102,14 +100,13 @@ class Error
     Create an error with file context, only containing the given `message`.
     """
     file = None
-    line = 0
-    pos = 0
+    position = Position.min()
     msg = message'
     source_snippet = None
     infos = Array[Error].create(0)
 
   fun has_file_context(): Bool =>
-    (file isnt None) and (line > 0) and (pos > 0)
+    (file isnt None) and (position > Position.min())
 
 
 struct _ErrorMsg

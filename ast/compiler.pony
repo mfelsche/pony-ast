@@ -6,7 +6,7 @@ primitive Compiler
   produced by the underlying libponyc.
 
   This "Compiler" here is calling the libponyc function `program_load`
-  and configures it to compile up to the `expr` pass with `quiet` verbosity.
+  and configures it to compile up to the `finaliser` pass with `quiet` verbosity.
   So this is not producing any Pony binary, ASM or LLVM IR, but it is giving you
   some convenient wrapper around the libponyc `ast_t` that represents the Pony program.
   """
@@ -30,7 +30,7 @@ primitive Compiler
     let pass_opt = _PassOpt.create()
     @pass_opt_init(pass_opt)
     pass_opt.verbosity = VerbosityLevels.quiet()
-    pass_opt.limit = PassIds.expr()
+    pass_opt.limit = PassIds.finaliser()
     pass_opt.release = false
 
     @codegen_pass_init(pass_opt)
