@@ -9,6 +9,7 @@ class Package
   Represents a pony package
   """
   let ast: AST
+  let hygienic_id: String val
   let qualified_name: String val
   let path: String val
 
@@ -20,10 +21,9 @@ class Package
     _program = program
     ast = ast'
     let package: _Package = ast.package().apply()?
-    let q_name_ptr = package.qualified_name
-    qualified_name = recover val String.copy_cstring(q_name_ptr) end
-    let path_ptr = package.path
-    path = recover val String.copy_cstring(path_ptr) end
+    qualified_name = package.qualified_name()
+    path = package.path()
+    hygienic_id = package.hygienic_id()
 
   fun module(): (Module | None) =>
     """
@@ -52,6 +52,8 @@ class Package
       end
     end
 
+
+
 class _PackageIter is Iterator[Package]
   var _package_ast: (AST | None)
   let _program: Program box
@@ -75,15 +77,15 @@ primitive _PackageGroup
   """STUB"""
 
 struct _Package
-  let path: Pointer[U8] val = path.create()
+  let _path: Pointer[U8] val = _path.create()
     """absolute path"""
-  let qualified_name: Pointer[U8] val = qualified_name.create()
+  let _qualified_name: Pointer[U8] val = _qualified_name.create()
     """
     For pretty printing, eg "builtin"
     """
-  let id: Pointer[U8] val = id.create()
+  let _id: Pointer[U8] val = _id.create()
     """hygienic identifier"""
-  let filename: Pointer[U8] val = filename.create()
+  let _filename: Pointer[U8] val = _filename.create()
     """directory name"""
   let symbol: Pointer[U8] val = symbol.create()
     """Wart to use for symbol names"""
@@ -95,4 +97,16 @@ struct _Package
   let low_index: USize = 0
   let allow_ffi: Bool = true
   let on_stack: Bool = true
+
+  fun qualified_name(): String val =>
+    recover val String.copy_cstring(this._qualified_name) end
+
+  fun path(): String val =>
+    recover val String.copy_cstring(this._path) end
+
+  fun hygienic_id(): String val =>
+    recover val String.copy_cstring(this._id) end
+
+  fun filename(): String val =>
+    recover val String.copy_cstring(this._filename) end
 

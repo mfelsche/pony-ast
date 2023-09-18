@@ -15,6 +15,8 @@ use @ast_id[TokenId](ast: Pointer[_AST] box)
 use @ast_source[NullablePointer[_Source]](ast: Pointer[_AST] box)
 use @ast_line[USize](ast: Pointer[_AST] box)
 use @ast_pos[USize](ast: Pointer[_AST] box)
+use @ast_has_scope[Bool](ast: Pointer[_AST] box)
+use @ast_get_symtab[Pointer[_Symtab]](ast: Pointer[_AST] box)
 
 use @ast_free[None](ast: Pointer[_AST] box)
 // only free the AST if it has no parent
@@ -28,6 +30,7 @@ use @ast_print_type[Pointer[U8] val](ast: Pointer[_AST] box)
 use @ast_print[Pointer[U8] val](ast: Pointer[_AST] box, width: USize)
 // mark the given AST as having its own scope
 //use @ast_scope[None](ast: _AST ref)
+use @ast_get[Pointer[_AST]](ast: Pointer[_AST] box, name: Pointer[U8] tag, status: NullablePointer[SymStatus])
 
 use @ast_parent[Pointer[_AST]](ast: Pointer[_AST] box)
 use @ast_child[Pointer[_AST]](ast: Pointer[_AST] box)
@@ -39,28 +42,9 @@ use @ast_childcount[USize](ast: Pointer[_AST] box)
 use @ast_data[Pointer[None]](ast: Pointer[_AST] box)
 use @ast_index[USize](ast: Pointer[_AST] box)
 
-use @ast_get[_AST](ast: Pointer[_AST] box, name: Pointer[U8] tag, status: NullablePointer[SymStatus])
-
-
-struct _Symtab
-  """
-  stupid stub
-  """
-
-struct SymStatus
-  var status: I32 = SymStati.none()
-
-primitive SymStati
-  fun none(): I32 => 0
-  fun nocase(): I32 => 1
-  fun defined(): I32 => 3
-  fun undefined(): I32 => 4
-  fun consumed(): I32 => 5
-  fun consumed_same_expr(): I32 => 6
-  fun ffidecl(): I32 => 7
-  fun err(): I32 => 8
 
 primitive _AST
+
 
 class ref AST
   """
@@ -205,6 +189,10 @@ class ref AST
     """
     @ast_child(raw).is_null()
 
+  fun box has_scope(): Bool =>
+    @ast_has_scope(raw)
+
+
   fun box source(): NullablePointer[_Source] =>
     """
     The source struct for this AST.
@@ -294,6 +282,45 @@ class ref AST
     => true
     else
       false
+    end
+
+  fun get(name: String box): (AST | None) =>
+    """
+    Wrapper around libponyc function `ast_get`
+    
+    Searching the scope of this AST and all the upper scopes
+    for an AST node with the given name.
+
+    If all you want to do is searching the scope of this node alone,
+    not traversing upwards into parent scopes, have a look at `find_in_scope`.
+    """
+    let ptr = @ast_get(raw, StringTab(name).cstring(), NullablePointer[SymStatus].none())
+    if ptr.is_null() then
+      None
+    else
+      AST(ptr)
+    end
+
+  // TODO: reason about the proper return type cap
+  fun box symbol_table(): (SymbolTable | None) =>
+    """
+    Get the symbol table representing this nodes lexical scope.
+    """
+    let ptr = @ast_get_symtab(raw)
+    if ptr.is_null() then
+      None
+    else
+      SymbolTable.from_pointer(ptr)
+    end
+
+  fun box find_in_scope(name: String box): (AST | None) =>
+    """
+    Search the scope of this node for an element with `name`.
+    """
+    try
+      let scope = this.symbol_table() as this->SymbolTable
+      let interned_name = StringTab(name)
+      scope(interned_name)
     end
 
   fun find_node(
@@ -635,6 +662,7 @@ class ref AST
             let line_idx = src.find("\n" where nth = l - 2)?
             line_idx.usize() + col
           end
+        Debug("INT start offset: " + start_offset.string())
         let end_offset = _Num.int(src, start_offset)
         Position(l, col + (end_offset - start_offset))
       | TokenIds.tk_float() =>
@@ -694,10 +722,11 @@ class ref AST
     visit(visitor)
     (visitor.min(), visitor.max())
 
-  fun box definition(): (AST | None) =>
+  fun box definitions(): Array[AST] =>
     """
-    Return the definition of the current node,
-    if applicable, otherwise return `None`.
+    Return the definitions of the current node,
+    if applicable. Usually there is only one,
+    but it is possible to have multiple in some cases.
     """ 
     DefinitionResolver.resolve(this)
 

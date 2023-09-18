@@ -10,12 +10,6 @@ primitive Compiler
   So this is not producing any Pony binary, ASM or LLVM IR, but it is giving you
   some convenient wrapper around the libponyc `ast_t` that represents the Pony program.
   """
-  fun _init() =>
-    @stringtab_init()
-
-  fun _final() =>
-    @stringtab_done()
-
   fun compile(
     path: FilePath,
     package_search_paths: (String box | ReadSeq[String val] box) = [])

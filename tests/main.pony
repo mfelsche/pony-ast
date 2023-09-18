@@ -2,6 +2,7 @@ use "debug"
 use "files"
 use "pony_test"
 use "../ast"
+use "itertools"
 
 actor \nodoc\ Main is TestList
   new create(env: Env) =>
@@ -150,83 +151,83 @@ class iso _PositionIndexFind is UnitTest
     (1, 1, TokenIds.tk_use()) // use
     (1, 5, TokenIds.tk_string()) // use url
     (1, 17, TokenIds.tk_string()) // end of use url
-    (3, 2, TokenIds.tk_actor()) // actor keyword
-    (3, 7, TokenIds.tk_id()) // actor name
-    (4, 4, TokenIds.tk_fvar()) // var field
-    (4, 7, TokenIds.tk_fvar()) // field name
-    (6, 3, TokenIds.tk_new()) // constructor begin
-    (6, 7, TokenIds.tk_new())  // constructor name
-    (6, 16, TokenIds.tk_param())   // param name
-    (6, 20, TokenIds.tk_nominal())   // param type
-    (7, 6, TokenIds.tk_fvarref()) // field ref
-    (9, 11, TokenIds.tk_typeref())  // String type ref
-    (9, 21, TokenIds.tk_newref()) // String.create
-    (9, 23, TokenIds.tk_int())   // literal int argument to String.create
-    (9, 24, TokenIds.tk_int())   // literal int argument to String.create
-    (9, 28, TokenIds.tk_funchain()) // .>
-    (9, 31, TokenIds.tk_funchain()) // append
-    (9, 38, TokenIds.tk_string()) // "snot"
-    (11, 7, TokenIds.tk_paramref()) // env
-    (11, 8, TokenIds.tk_fletref()) // env.out <- the dot
-    (11, 9, TokenIds.tk_fletref()) // env.out <- out
-    (11, 12, TokenIds.tk_beref()) // env.out.print <- the second dot
-    (11, 13, TokenIds.tk_beref()) // print
-    (11, 18, TokenIds.tk_call()) // (
-    (11, 19, TokenIds.tk_fvarref()) // name <- field reference as param
-    (13, 3, TokenIds.tk_trait()) // trait
-    (13, 9, TokenIds.tk_id()) // trait name
-    (14, 5, TokenIds.tk_fun()) // fun keyword
-    (14, 7, TokenIds.tk_fun()) // fun name
-    (14, 14, TokenIds.tk_nominal()) // return type
-    (16, 3, TokenIds.tk_fun()) // fun keyword
-    (16, 7, TokenIds.tk_fun()) // fun name
-    (16, 16, TokenIds.tk_nominal()) // return type
-    (16, 24, TokenIds.tk_funref()) // reference to bla
-    (16, 27, TokenIds.tk_call()) // start of call arguments
-    (16, 30, TokenIds.tk_call()) // desugared `==` operator to call to `eq`
-    (16, 33, TokenIds.tk_newref()) // reference to the constructor
-    (16, 35, TokenIds.tk_call()) // call of the constructor
-    (16, 36, TokenIds.tk_int()) // integer argument
-    (18, 1, TokenIds.tk_class()) // class keyword
-    (18, 7, TokenIds.tk_id()) // class name
-    (18, 14, TokenIds.tk_nominal()) // provided type `Snot`
-    (19, 3, TokenIds.tk_string()) // docstring first line
-    (20, 1, TokenIds.tk_string()) // docstring second line beginning
-    (20, 11, TokenIds.tk_string()) // docstring second line end
-    (21, 5, TokenIds.tk_string()) // last ending quote of triple-quote
-    (23, 3, TokenIds.tk_fvar()) // var keyword
-    (23, 7, TokenIds.tk_fvar()) // var name
-    (23, 18, TokenIds.tk_nominal()) // Array
-    (23, 24, TokenIds.tk_nominal()) // String type argument
-    (23, 32, TokenIds.tk_nominal()) // the iso part
-    (23, 36, TokenIds.tk_uniontype()) // the union pipe
-    (23, 38, TokenIds.tk_nominal()) // None initializer
-    (24, 3, TokenIds.tk_embed()) // embed keyword
-    (24, 9, TokenIds.tk_embed()) // embed name
-    (24, 12, TokenIds.tk_nominal()) // String type
-    (24, 21, TokenIds.tk_typeref()) // String type ref in initializer as part of constructor call
-    (24, 27, TokenIds.tk_newref()) // reference to the constructor, the dot
-    (24, 28, TokenIds.tk_newref()) // reference to the constructor
-    (24, 34, TokenIds.tk_call()) // constructor call
-    (24, 35, TokenIds.tk_int()) // binary int argument
-    (24, 38, TokenIds.tk_int()) // binary int argument - end
-    (25, 7, TokenIds.tk_flet()) // immutable field name
-    (27, 20, TokenIds.tk_newref()) // reference to F32 constructor
-    (27, 23, TokenIds.tk_call()) // constructor call
-    (27, 24, TokenIds.tk_float()) // float literal start
-    (27, 32, TokenIds.tk_float()) // float literal end
-    (27, 35, TokenIds.tk_funref()) // .u8() - the dot
-    (29, 50, TokenIds.tk_call()) // the -1, which was transformed to 1.neg()
+    (4, 2, TokenIds.tk_actor()) // actor keyword
+    (4, 7, TokenIds.tk_id()) // actor name
+    (5, 4, TokenIds.tk_fvar()) // var field
+    (5, 7, TokenIds.tk_fvar()) // field name
+    (7, 3, TokenIds.tk_new()) // constructor begin
+    (7, 7, TokenIds.tk_new())  // constructor name
+    (7, 16, TokenIds.tk_param())   // param name
+    (7, 20, TokenIds.tk_nominal())   // param type
+    (8, 6, TokenIds.tk_fvarref()) // field ref
+    (10, 11, TokenIds.tk_typeref())  // String type ref
+    (10, 21, TokenIds.tk_newref()) // String.create
+    (10, 23, TokenIds.tk_int())   // literal int argument to String.create
+    (10, 24, TokenIds.tk_int())   // literal int argument to String.create
+    (10, 28, TokenIds.tk_funchain()) // .>
+    (10, 31, TokenIds.tk_funchain()) // append
+    (10, 38, TokenIds.tk_string()) // "snot"
+    (12, 7, TokenIds.tk_paramref()) // env
+    (12, 8, TokenIds.tk_fletref()) // env.out <- the dot
+    (12, 9, TokenIds.tk_fletref()) // env.out <- out
+    (12, 12, TokenIds.tk_beref()) // env.out.print <- the second dot
+    (12, 13, TokenIds.tk_beref()) // print
+    (12, 18, TokenIds.tk_call()) // (
+    (12, 19, TokenIds.tk_fvarref()) // name <- field reference as param
+    (14, 3, TokenIds.tk_trait()) // trait
+    (14, 9, TokenIds.tk_id()) // trait name
+    (15, 5, TokenIds.tk_fun()) // fun keyword
+    (15, 7, TokenIds.tk_fun()) // fun name
+    (15, 14, TokenIds.tk_nominal()) // return type
+    (17, 3, TokenIds.tk_fun()) // fun keyword
+    (17, 7, TokenIds.tk_fun()) // fun name
+    (17, 16, TokenIds.tk_nominal()) // return type
+    (17, 24, TokenIds.tk_funref()) // reference to bla
+    (17, 27, TokenIds.tk_call()) // start of call arguments
+    (17, 30, TokenIds.tk_call()) // desugared `==` operator to call to `eq`
+    (17, 33, TokenIds.tk_newref()) // reference to the constructor
+    (17, 35, TokenIds.tk_call()) // call of the constructor
+    (17, 36, TokenIds.tk_int()) // integer argument
+    (19, 1, TokenIds.tk_class()) // class keyword
+    (19, 7, TokenIds.tk_id()) // class name
+    (19, 14, TokenIds.tk_nominal()) // provided type `Snot`
+    (20, 3, TokenIds.tk_string()) // docstring first line
+    (21, 1, TokenIds.tk_string()) // docstring second line beginning
+    (21, 11, TokenIds.tk_string()) // docstring second line end
+    (22, 5, TokenIds.tk_string()) // last ending quote of triple-quote
+    (24, 3, TokenIds.tk_fvar()) // var keyword
+    (24, 7, TokenIds.tk_fvar()) // var name
+    (24, 18, TokenIds.tk_nominal()) // Array
+    (24, 24, TokenIds.tk_nominal()) // String type argument
+    (24, 32, TokenIds.tk_nominal()) // the iso part
+    (24, 36, TokenIds.tk_uniontype()) // the union pipe
+    (24, 38, TokenIds.tk_nominal()) // None initializer
+    (25, 3, TokenIds.tk_embed()) // embed keyword
+    (25, 9, TokenIds.tk_embed()) // embed name
+    (25, 12, TokenIds.tk_nominal()) // String type
+    (25, 21, TokenIds.tk_typeref()) // String type ref in initializer as part of constructor call
+    (25, 27, TokenIds.tk_newref()) // reference to the constructor, the dot
+    (25, 28, TokenIds.tk_newref()) // reference to the constructor
+    (25, 34, TokenIds.tk_call()) // constructor call
+    (25, 35, TokenIds.tk_int()) // binary int argument
+    (25, 38, TokenIds.tk_int()) // binary int argument - end
+    (26, 7, TokenIds.tk_flet()) // immutable field name
+    (28, 20, TokenIds.tk_newref()) // reference to F32 constructor
+    (28, 23, TokenIds.tk_call()) // constructor call
+    (28, 24, TokenIds.tk_float()) // float literal start
+    (28, 32, TokenIds.tk_float()) // float literal end
+    (28, 35, TokenIds.tk_funref()) // .u8() - the dot
+    (30, 50, TokenIds.tk_call()) // the -1, which was transformed to 1.neg()
     //(30, 19, TokenIds.tk_object()) // the syntax rewrite of objects and lambdas removes this node
-    (31, 15, TokenIds.tk_flet())
-    (32, 15, TokenIds.tk_fun())
-    (33, 11, TokenIds.tk_match())
-    (33, 21, TokenIds.tk_funref())
-    (34, 11, TokenIds.tk_match_capture())
-    (34, 15, TokenIds.tk_id())
-    (34, 18, TokenIds.tk_nominal())
-    (34, 29, TokenIds.tk_call()) // call to s.gt(0)
-    (34, 36, TokenIds.tk_id())
+    (32, 15, TokenIds.tk_flet())
+    (33, 15, TokenIds.tk_fun())
+    (34, 11, TokenIds.tk_match())
+    (34, 21, TokenIds.tk_funref())
+    (35, 11, TokenIds.tk_match_capture())
+    (35, 15, TokenIds.tk_id())
+    (35, 18, TokenIds.tk_nominal())
+    (35, 29, TokenIds.tk_call()) // call to s.gt(0)
+    (35, 36, TokenIds.tk_id())
     //(36, 30, TokenIds.tk_chain())
   ]
 
@@ -286,13 +287,19 @@ class iso _PositionIndexFind is UnitTest
 
 
 class \nodoc\ _DefinitionTest is UnitTest
-  let expected: Array[(Position, Position, TokenId)] val = [
-    (Position.create(7, 5), Position.create(4, 3), TokenIds.tk_fvar())
-    (Position.create(9, 16), Position.create(54, 3), TokenIds.tk_new()) // reference to constructor in a different file
-    (Position.create(9, 30), Position.create(921, 3), TokenIds.tk_fun()) // reference to function in a different file
-    (Position.create(11, 6), Position.create(6, 14), TokenIds.tk_param())
-    (Position.create(11, 10), Position.create(10, 3), TokenIds.tk_flet()) // reference to behavior in a different file
-    (Position.create(11, 15), Position.create(20, 3), TokenIds.tk_be()) // reference to behavior in a different file
+  let expected: Array[(Position, Array[Position] val, TokenId)] val = [
+    (Position.create(8, 5), [Position.create(5, 3)], TokenIds.tk_fvar())
+    (Position.create(10, 16), [Position.create(54, 3)], TokenIds.tk_new()) // reference to constructor in a different file
+    (Position.create(10, 30), [Position.create(921, 3)], TokenIds.tk_fun()) // reference to function in a different file
+    (Position.create(12, 6), [Position.create(7, 14)], TokenIds.tk_param())
+    (Position.create(12, 10), [Position.create(19, 3)], TokenIds.tk_flet()) // reference to behavior in a different file
+    (Position.create(12, 15), [Position.create(20, 3)], TokenIds.tk_be()) // reference to behavior in a different file
+    (Position.create(71, 35), [Position.create(53, 3); Position.create(59, 3)], TokenIds.tk_fun()) // function on a union type receiver
+    (Position.create(72, 34), [Position.create(45, 3); Position.create(48, 3)], TokenIds.tk_fun()) // function on an isect type receiver
+    (Position.create(70, 32), [Position.create(63, 3)], TokenIds.tk_flet()) // tuple element reference - resolves to definition of the whole tuple
+    (Position.create(79, 10), [Position.create(78, 24)], TokenIds.tk_typeparam()) // type param ref
+    (Position.create(82, 9), [Position.create(78, 24)], TokenIds.tk_typeparam()) // type ref within a newberef
+    (Position.create(87, 5), [Position.create(1, 1)], TokenIds.tk_module()) // package ref
   ]
   fun name(): String => "definition/test"
   fun apply(h: TestHelper) =>
@@ -315,23 +322,27 @@ class \nodoc\ _DefinitionTest is UnitTest
           let index = module.create_position_index()
           index.debug(h.env.out)
 
-          for (ref_pos, expected_def_pos, expected_def_token_id) in expected.values() do
+          for (ref_pos, expected_def_positions, expected_def_token_id) in expected.values() do
             match index.find_node_at(ref_pos.line(), ref_pos.column())
             | let ast: AST box =>
-              let definition: AST = 
-                try
-                  ast.definition() as AST
-                else
-                  h.fail("No definition for node: " + ast.debug())
-                  return
-                end
-              h.assert_eq[Position](expected_def_pos, definition.position(),
-              "Definition at wrong position " + definition.debug())
-              h.assert_eq[String val](
-                TokenIds.string(expected_def_token_id),
-                TokenIds.string(definition.id()),
-                "Found wrong node " + ast.debug()
-              )
+              let definitions: Array[AST] = ast.definitions()
+              if definitions.size() == 0 then
+                h.fail("No definition for node: " + ast.debug())
+                return
+              end
+              h.assert_eq[USize](definitions.size(), expected_def_positions.size(),
+                "Expected to find " + expected_def_positions.size().string() +
+                "definitions, found: " + definitions.size().string())
+              let iter = Iter[Position](expected_def_positions.values()).zip[AST](definitions.values())
+              for (expected_def_pos, definition) in iter do
+                h.assert_eq[Position](expected_def_pos, definition.position(),
+                "Definition at wrong position " + definition.debug())
+                h.assert_eq[String val](
+                  TokenIds.string(expected_def_token_id),
+                  TokenIds.string(definition.id()),
+                  "Found wrong node " + ast.debug()
+                )
+              end
             | None =>
               h.fail("No AST node found at " + ref_pos.string())
               return

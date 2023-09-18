@@ -110,6 +110,8 @@ class PositionIndex
             // take the first entry that contains our position
             let start_pos = entry_before.start
             let end_pos = candidate.end_pos() as Position
+
+            Debug("candidate: " + candidate.debug() + " end_pos: " + end_pos.string())
             if (start_pos <= needle.start) and (needle.start <= end_pos) then
               // refine to a meaningful node
               return _refine_node(candidate)
@@ -143,11 +145,13 @@ class PositionIndex
         | TokenIds.tk_funref() | TokenIds.tk_beref() | TokenIds.tk_newref() | TokenIds.tk_newberef() // reference to function
         | TokenIds.tk_funchain() | TokenIds.tk_bechain()
         | TokenIds.tk_typeref() // reference to type
+        | TokenIds.tk_typeparamref() // reference to generic type parameter
         | TokenIds.tk_nominal() // name of a type
         | TokenIds.tk_flet() | TokenIds.tk_fvar() | TokenIds.tk_embed() // fields
         | TokenIds.tk_fletref() | TokenIds.tk_fvarref() | TokenIds.tk_embedref() // references to fields
         | TokenIds.tk_paramref()
         | TokenIds.tk_var() | TokenIds.tk_let() // local variables
+        | TokenIds.tk_packageref() // package reference
         => return parent'
         else
           Debug("Parent unknown: " + TokenIds.string(parent'.id()))
@@ -167,6 +171,16 @@ class PositionIndex
         | TokenIds.tk_primitive() | TokenIds.tk_trait() | TokenIds.tk_interface()
         | TokenIds.tk_nominal()
         | TokenIds.tk_new() | TokenIds.tk_fun() | TokenIds.tk_be() =>
+          return parent'
+        end
+      end
+    | TokenIds.tk_int() =>
+      // special case for tuple element references where the RHS is rewritten as
+      // TK_INT
+      match node.parent()
+      | let parent': AST box =>
+        match parent'.id()
+        | TokenIds.tk_tupleelemref() =>
           return parent'
         end
       end

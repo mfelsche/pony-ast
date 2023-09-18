@@ -15,7 +15,8 @@ primitive _Num
       if only_decimal then
         _ASCII~is_decimal()
       else
-        if c == '0' then
+        match c
+        | '0' =>
           let c1 = try src(offset + 1)? else return offset end
           if c1 == 'x' then
             offset = offset + 2
@@ -26,6 +27,13 @@ primitive _Num
           else
             _ASCII~is_decimal()
           end
+        | '_' =>
+          // special case for tuple element references
+          // which are rewritten to TK_INT
+          // as a hack we increase the offset past the underscore to get a
+          // valid offset
+          offset = offset + 1
+          _ASCII~is_decimal()
         else
           _ASCII~is_decimal()
         end

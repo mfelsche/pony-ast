@@ -3,8 +3,6 @@ use "lib:ponyc-standalone" if posix or osx
 use "lib:c++" if osx
 use "files"
 
-use @stringtab_init[None]()
-use @stringtab_done[None]()
 
 use @program_create[_Program]()
 use @program_free[None](program: _Program)
@@ -51,6 +49,10 @@ class Program
     The rest is still unknown to me.
     """
     _PackageIter.create(this)
+
+  fun apply(package': String): Package ? =>
+    let package_ast = ast.find_in_scope(package') as AST
+    Package.create(this, package_ast)?
 
   fun _final() =>
     if not ast.raw.is_null() then

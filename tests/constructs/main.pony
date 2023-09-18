@@ -1,4 +1,5 @@
 use "collections"
+use debug = "debug"
 
 actor Main
   var name: String
@@ -38,4 +39,50 @@ class Foo is Snot
           applied()
         end
     end
+
+
+trait Res1
+  fun res(): U8
+
+trait Res2
+  fun res(): U8
+
+class X is (Res1 & Res2)
+  let f: U8 = 0
+
+  fun res(): U8 =>
+    f
+
+class Y is (Res1 & Res2)
+  let f: U8 = 1
+
+  fun res(): U8 =>
+    f
+
+class FieldTypes
+  let tuple_field: (String, X, Y)
+  let union_field: (X | Y)
+  let isect_field: (Res1 & Res2)
+
+  new create() =>
+    tuple_field = ("", X, Y)
+    union_field = Y
+    isect_field = tuple_field._2
+    let something1 = union_field.res()
+    let something2 = isect_field.res()
+
+
+trait WithEmptyConstructor
+  new ref create()
+
+class WithGenericParam[T: WithEmptyConstructor ref]
+  let f: T
+
+  new create() =>
+    f = T.create()
+
+
+primitive Log
+  fun apply(msg: String) =>
+    debug.Debug(msg)
 
