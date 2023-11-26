@@ -5,7 +5,7 @@ use "assert"
 
 primitive DefinitionResolver
   fun _data_ast(ast: AST box): Array[AST] =>
-    let ptr = @ast_data[Pointer[_AST]](ast.raw)
+    let ptr = @ast_data[Pointer[_AST] val](ast.raw)
     if ptr.is_null() then
       [as AST:]
     else

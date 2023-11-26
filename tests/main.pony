@@ -35,7 +35,7 @@ class \nodoc\ iso _CompileSimple is UnitTest
       else
         h.fail("No package, huh?")
       end
-    | let e: Array[Error] =>
+    | let e: Array[Error] val =>
       h.fail(
         "Compiling the simple example failed with: " +
         try
@@ -67,7 +67,7 @@ class \nodoc\ iso _CompileRepeatedly is UnitTest
         else
           h.fail("No package, huh?")
         end
-      | let e: Array[Error] =>
+      | let e: Array[Error] val =>
         h.fail(
           "Compiling the simple example failed with: " +
           try
@@ -275,7 +275,7 @@ class iso _PositionIndexFind is UnitTest
         h.fail("No package, huh?")
         return
       end
-    | let e: Array[Error] =>
+    | let e: Array[Error] val =>
       h.fail(
         "Compiling the constructs example failed with: " +
         try
@@ -357,7 +357,7 @@ class \nodoc\ _DefinitionTest is UnitTest
         h.fail("No package, huh?")
         return
       end
-    | let e: Array[Error] =>
+    | let e: Array[Error] val =>
       h.fail(
         "Compiling the constructs example failed with: " +
         try

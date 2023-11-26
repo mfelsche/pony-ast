@@ -15,7 +15,7 @@ actor CompilerActor
       end
       out.print(ANSI.bold(true) + ANSI.green() + "OK" + ANSI.reset())
 
-    | let errs: Array[Error] =>
+    | let errs: Array[Error] val =>
       out.print("Found " + ANSI.bold(true) + ANSI.red() + errs.size().string() + ANSI.reset() + " Errors:")
       for err in errs.values() do
         match err.file

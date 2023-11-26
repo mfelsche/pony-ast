@@ -13,7 +13,7 @@ primitive Compiler
   fun compile(
     path: FilePath,
     package_search_paths: (String box | ReadSeq[String val] box) = [])
-  : (Program | Array[Error])
+  : (Program val^ | Array[Error] val^)
   =>
     """
     Compile the pony source code at the given `path` with the paths in `package_search_paths`
@@ -43,18 +43,20 @@ primitive Compiler
     // process it over and over
     let program_ast = @program_load(path.path.cstring(), pass_opt)
     let res =
-      if program_ast.is_null() then
-        try
-          let errors = pass_opt.check.errors()?
-          errors.extract() // extracts an array of errors
+        if program_ast.is_null() then
+          try
+            let errors = pass_opt.check.errors()?
+            errors.extract() // extracts an array of errors
+          else
+            recover val
+              [
+                Error.message("Compilation failed but libponyc produced no error messages.")
+              ]
+            end
+          end
         else
-          [
-            Error.message("Compilation failed but libponyc produced no error messages.")
-          ]
+          Program.create(AST(program_ast))
         end
-      else
-        Program.create(AST(program_ast))
-      end
 
     @package_done(pass_opt)
     @codegen_pass_cleanup(pass_opt)

@@ -10,7 +10,7 @@ primitive Types
       match ast.id()
       // TODO: handle all the cases we fixed below
       | TokenIds.tk_letref() | TokenIds.tk_varref() | TokenIds.tk_match_capture() =>
-        let def: Pointer[_AST] = @ast_data[Pointer[_AST]](ast.raw)
+        let def: Pointer[_AST] val = @ast_data[Pointer[_AST] val](ast.raw)
         if not def.is_null() then
           AST(def).ast_type_string()
         end

@@ -6,7 +6,7 @@ use "files"
 
 use @program_create[_Program]()
 use @program_free[None](program: _Program)
-use @program_load[Pointer[_AST]](path: Pointer[U8] tag, opt: _PassOpt)
+use @program_load[Pointer[_AST] val](path: Pointer[U8] tag, opt: _PassOpt)
 
 use @printf[None](s: Pointer[U8] tag, ...)
 
@@ -25,10 +25,10 @@ primitive VerbosityLevels
 
 type VerbosityLevel is I32
 
-class Program
+class val Program
   let ast: AST
 
-  new create(ast': AST) =>
+  new val create(ast': AST) =>
     ast = ast'
 
   fun package(): (Package | None) =>

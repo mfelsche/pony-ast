@@ -8,9 +8,9 @@ use "collections"
 use @ast_blank[_AST](id: TokenId)
 
 // allocate a new
-use @ast_new[Pointer[_AST]](t: _Token, id: TokenId)
+use @ast_new[Pointer[_AST] val](t: _Token, id: TokenId)
 // generate (allocate) an AST node for the given token
-use @ast_token[Pointer[_AST]](t: _Token)
+use @ast_token[Pointer[_AST] val](t: _Token)
 use @ast_id[TokenId](ast: Pointer[_AST] box)
 use @ast_source[NullablePointer[_Source]](ast: Pointer[_AST] box)
 use @ast_line[USize](ast: Pointer[_AST] box)
@@ -25,19 +25,19 @@ use @ast_free_unattached[None](ast: Pointer[_AST])
 use @ast_name[Pointer[U8] val](ast: Pointer[_AST] box)
 use @ast_name_len[USize](ast: Pointer[_AST] box)
 use @ast_nice_name[Pointer[U8] val](ast: Pointer[_AST] box)
-use @ast_type[Pointer[_AST]](ast: Pointer[_AST] box)
+use @ast_type[Pointer[_AST] val](ast: Pointer[_AST] box)
 use @ast_print_type[Pointer[U8] val](ast: Pointer[_AST] box)
 use @ast_print[Pointer[U8] val](ast: Pointer[_AST] box, width: USize)
 // mark the given AST as having its own scope
 //use @ast_scope[None](ast: _AST ref)
-use @ast_get[Pointer[_AST]](ast: Pointer[_AST] box, name: Pointer[U8] tag, status: NullablePointer[SymStatus])
+use @ast_get[Pointer[_AST] val](ast: Pointer[_AST] box, name: Pointer[U8] tag, status: NullablePointer[SymStatus])
 
-use @ast_parent[Pointer[_AST]](ast: Pointer[_AST] box)
-use @ast_child[Pointer[_AST]](ast: Pointer[_AST] box)
-use @ast_childlast[Pointer[_AST]](ast: Pointer[_AST] box)
-use @ast_sibling[Pointer[_AST]](ast: Pointer[_AST] box)
-use @ast_previous[Pointer[_AST]](ast: Pointer[_AST] box)
-use @ast_childidx[Pointer[_AST]](ast: Pointer[_AST] box, idx: USize)
+use @ast_parent[Pointer[_AST] val](ast: Pointer[_AST] box)
+use @ast_child[Pointer[_AST] val](ast: Pointer[_AST] box)
+use @ast_childlast[Pointer[_AST] val](ast: Pointer[_AST] box)
+use @ast_sibling[Pointer[_AST] val](ast: Pointer[_AST] box)
+use @ast_previous[Pointer[_AST] val](ast: Pointer[_AST] box)
+use @ast_childidx[Pointer[_AST] val](ast: Pointer[_AST] box, idx: USize)
 use @ast_childcount[USize](ast: Pointer[_AST] box)
 use @ast_data[Pointer[None]](ast: Pointer[_AST] box)
 use @ast_index[USize](ast: Pointer[_AST] box)
@@ -46,15 +46,15 @@ use @ast_index[USize](ast: Pointer[_AST] box)
 primitive _AST
 
 
-class ref AST
+class val AST
   """
   Generic AST node for ponyc programs.
 
   Wraps the C-type `*ast_t`.
   """
-  let raw: Pointer[_AST]
+  let raw: Pointer[_AST] val
 
-  new ref create(ast': Pointer[_AST]) =>
+  new val create(ast': Pointer[_AST] val) =>
     raw = ast'
 
   fun box id(): TokenId =>
@@ -318,7 +318,7 @@ class ref AST
     Search the scope of this node for an element with `name`.
     """
     try
-      let scope = this.symbol_table() as this->SymbolTable
+      let scope = this.symbol_table() as SymbolTable
       let interned_name = StringTab(name)
       scope(interned_name)
     end

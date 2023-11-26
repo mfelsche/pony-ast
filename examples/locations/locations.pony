@@ -62,7 +62,7 @@ actor Main
       else
         env.err.print("No package in our program???")
       end
-    | let errors: Array[Error] =>
+    | let errors: Array[Error] val =>
       env.out.print("Found " + ANSI.bold(true) + ANSI.red() + errors.size().string() + ANSI.reset() + " Errors:")
       for err in errors.values() do
         match err.file

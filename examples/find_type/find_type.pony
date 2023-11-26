@@ -93,7 +93,7 @@ actor Main
         env.out.print("OK")
         let t = get_type_at(file, line, column, program.package() as Package) as String
         env.out.print("Type: " + t)
-      | let errors: Array[Error] =>
+      | let errors: Array[Error] val =>
         env.out.print("ERROR")
       end
     else

@@ -2,7 +2,7 @@ use @symtab_new[Pointer[_Symtab] ref]()
 use @symtab_free[None](symtab: Pointer[_Symtab] box) // box is needed as this is
 // called in a finalizer
 use @symtab_add[Bool](symtab: Pointer[_Symtab] ref, name: Pointer[U8] tag, def: Pointer[_AST] box, status: NullablePointer[SymStatus])
-use @symtab_find[Pointer[_AST] ref](symtab: Pointer[_Symtab] box, name: Pointer[U8] tag, status: NullablePointer[SymStatus])
+use @symtab_find[Pointer[_AST] val](symtab: Pointer[_Symtab] box, name: Pointer[U8] tag, status: NullablePointer[SymStatus])
 use @symtab_init[None](symtab: Pointer[_Symtab] ref, size: USize)
 use @symtab_destroy[None](symtab: Pointer[_Symtab] ref)
 use @symtab_optimize[None](symtab: Pointer[_Symtab] ref)
@@ -26,7 +26,7 @@ struct _Symbol
   } symbol_t;
   """
   let name: Pointer[U8] val = name.create()
-  let def: Pointer[_AST] = def.create()
+  let def: Pointer[_AST] val = def.create()
   let status: SymStatus = status.create()
   let branch_count: USize = 0
 
