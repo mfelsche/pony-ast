@@ -31,7 +31,7 @@ class val Program
   new val create(ast': AST) =>
     ast = ast'
 
-  fun package(): (Package | None) =>
+  fun val package(): (Package | None) =>
     """
     The package representing the source directory
     """
@@ -42,7 +42,7 @@ class val Program
       end
     end
 
-  fun packages(): Iterator[Package] =>
+  fun val packages(): Iterator[Package] =>
     """
     Source directory is always the first package.
     Second is builtin.
@@ -50,7 +50,7 @@ class val Program
     """
     _PackageIter.create(this)
 
-  fun apply(package': String): Package ? =>
+  fun val apply(package': String): Package ? =>
     let package_ast = ast.find_in_scope(package') as AST
     Package.create(this, package_ast)?
 

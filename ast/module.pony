@@ -3,8 +3,8 @@ use "collections"
 use "debug"
 use "binarysearch"
 
-class Module is (Hashable & Equatable[Module])
-  let ast: AST
+class val Module is (Hashable & Equatable[Module])
+  let ast: AST val
   let file: String val
     """Absolute path to the file of this module"""
   let len: USize
@@ -18,7 +18,7 @@ class Module is (Hashable & Equatable[Module])
   // it is reaped when the Program is collected by GC
   let _program: Program box
 
-  new create(program: Program box, ast': AST) ? =>
+  new val create(program: Program val, ast': AST) ? =>
     """
     Construct the module by extracting some metadata from the AST
     """
@@ -47,18 +47,18 @@ class Module is (Hashable & Equatable[Module])
     same_file and same_content
 
 
-class _ModuleIter is Iterator[Module]
-  var _module_ast: (AST | None)
-  let _program: Program box
+class _ModuleIter is Iterator[Module val]
+  var _module_ast: (AST val | None)
+  let _program: Program val
 
-  new ref create(program: Program box, package: Package box) =>
+  new ref create(program: Program val, package: Package val) =>
     _program = program
     _module_ast = package.ast.child()
 
   fun ref has_next(): Bool =>
     _module_ast isnt None
 
-  fun ref next(): Module ? =>
+  fun ref next(): Module val ? =>
     let module_ast = _module_ast as AST
     _module_ast = module_ast.sibling()
     Module.create(_program, module_ast)?

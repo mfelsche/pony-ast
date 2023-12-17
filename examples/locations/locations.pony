@@ -58,7 +58,7 @@ actor Main
     match Compiler.compile(path, search_paths)
     | let program: Program =>
       try
-        (program.package() as Package ref).ast.visit(_ASTLocationVisitor(env.out))
+        (program.package() as Package val).ast.visit(_ASTLocationVisitor(env.out))
       else
         env.err.print("No package in our program???")
       end

@@ -4,20 +4,20 @@ use @package_add_paths[None](paths: Pointer[U8] tag, opy: _PassOpt)
 use @package_init_lib[Bool](opt: _PassOpt, pony_installation: Pointer[U8] tag)
 use @package_done[None](opt: _PassOpt)
 
-class Package
+class val Package
   """
   Represents a pony package
   """
-  let ast: AST
+  let ast: AST val
   let hygienic_id: String val
   let qualified_name: String val
   let path: String val
 
   // this one is just kept around so the underlying AST is not lost
   // it is reaped when the Program is collected by GC
-  let _program: Program box
+  let _program: Program val
 
-  new create(program: Program box, ast': AST) ? =>
+  new val create(program: Program val, ast': AST) ? =>
     _program = program
     ast = ast'
     let package: _Package = ast.package().apply()?
@@ -25,7 +25,7 @@ class Package
     path = package.path()
     hygienic_id = package.hygienic_id()
 
-  fun module(): (Module | None) =>
+  fun val module(): (Module val | None) =>
     """
     Returns the first Module in this Package
     """
@@ -36,10 +36,10 @@ class Package
       end
     end
 
-  fun modules(): Iterator[Module] =>
+  fun val modules(): Iterator[Module val] =>
     _ModuleIter.create(_program, this)
 
-  fun find_module(file: String): (Module | None) =>
+  fun val find_module(file: String): (Module val | None) =>
     """
     Find a module in this package by package directory path
     """
@@ -55,17 +55,17 @@ class Package
 
 
 class _PackageIter is Iterator[Package]
-  var _package_ast: (AST | None)
-  let _program: Program box
+  var _package_ast: (AST val | None)
+  let _program: Program val
 
-  new ref create(program: Program box) =>
+  new ref create(program: Program val) =>
     _package_ast = program.ast.child()
     _program = program
 
   fun ref has_next(): Bool =>
     _package_ast isnt None
 
-  fun ref next(): Package ? =>
+  fun ref next(): Package val ? =>
     let package_ast = _package_ast as AST
     _package_ast = package_ast.sibling()
     Package.create(_program, package_ast)?
