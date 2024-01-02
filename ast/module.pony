@@ -30,7 +30,7 @@ class val Module is (Hashable & Equatable[Module])
     len = source.len
     _hash = @ponyint_hash_block(source.m, len)
   
-  fun create_position_index(): PositionIndex =>
+  fun val create_position_index(): PositionIndex val =>
     PositionIndex.create(this)
 
   fun box hash(): USize =>
@@ -64,7 +64,7 @@ class _ModuleIter is Iterator[Module val]
     Module.create(_program, module_ast)?
 
 
-class PositionIndex
+class val PositionIndex
   """
   Index for AST nodes sorted by their position in the index.
 
@@ -72,13 +72,13 @@ class PositionIndex
   """
   // IMPORTANT: keep the reference to the module alive,
   // as long as we keep this class around
-  let _module: Module box
+  let _module: Module val
   let _index: Array[_Entry] box
     """
     Sorted by position
     """
 
-  new create(module: Module box) =>
+  new val create(module: Module val) =>
     _module = module
     let visitor = _PositionIndexBuilder
     _module.ast.visit(visitor)
