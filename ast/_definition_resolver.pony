@@ -118,6 +118,9 @@ primitive DefinitionResolver
         Debug("Error resolving package reference")
         []
       end
+    | TokenIds.tk_nominal() =>
+      // the definition of the type is set as ast-data in the names pass
+      _data_ast(ast)
     else
       Debug("Dunno how to resolve definition for " + ast.debug())
       []
