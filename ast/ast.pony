@@ -683,7 +683,7 @@ class val AST
     end
 
 
-  fun _span(): (Position, Position) =>
+  fun span(): (Position, Position) =>
     """
     Return the start and end position of this AST node.
     """
