@@ -288,6 +288,7 @@ class iso _PositionIndexFind is UnitTest
 
 class \nodoc\ _DefinitionTest is UnitTest
   let expected: Array[(Position, Array[Position] val, TokenId)] val = [
+    (Position.create(7, 20), [Position.create(4, 1)], TokenIds.tk_class()) // nominal reference to type in a different file
     (Position.create(8, 5), [Position.create(5, 3)], TokenIds.tk_fvar())
     (Position.create(10, 16), [Position.create(54, 3)], TokenIds.tk_new()) // reference to constructor in a different file
     (Position.create(10, 30), [Position.create(921, 3)], TokenIds.tk_fun()) // reference to function in a different file
