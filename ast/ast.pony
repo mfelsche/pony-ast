@@ -80,12 +80,12 @@ class val AST
     Access the data pointer, which can be anything and isn't typed in any way in the `ast_t` struct, #yolo!
 
     ### DANGER
-    
+
     Take great care to only load stuff with this method when you know
     that the current node actually contains a `T`.
     """
     @ast_data[Pointer[T]](raw)
-    
+
   fun box sibling(): (AST | None) =>
     let sibl = @ast_sibling(raw)
     if sibl.is_null() then
@@ -504,7 +504,7 @@ class val AST
   fun end_pos(): (Position | None) =>
     """
     Return the position of the last character of the given AST node.
-      
+
     For some nodes we know the actual size, so we can provide its exact end position.
     """
     let l = line()
@@ -533,7 +533,7 @@ class val AST
       // 1 character symbols
       | TokenIds.tk_backslash()
       | TokenIds.tk_lbrace() | TokenIds.tk_rbrace()
-      | TokenIds.tk_lparen() | TokenIds.tk_rparen() | TokenIds.tk_call()
+      | TokenIds.tk_lparen() | TokenIds.tk_rparen()
       | TokenIds.tk_lsquare() | TokenIds.tk_rsquare()
       | TokenIds.tk_comma() | TokenIds.tk_dot() | TokenIds.tk_tilde()
       | TokenIds.tk_colon() | TokenIds.tk_semi() | TokenIds.tk_assign()

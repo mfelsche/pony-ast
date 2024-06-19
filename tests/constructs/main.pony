@@ -86,3 +86,22 @@ primitive Log
   fun apply(msg: String) =>
     debug.Debug(msg)
 
+type Union is (_Snot | _Badger)
+
+primitive _Snot
+primitive _Badger
+
+class Matching
+  fun do_a_match(u: Union) =>
+    match u
+    | _Snot =>
+      do_snot()
+    | _Badger =>
+      do_badger()
+    end
+
+  fun do_snot(): String =>
+    "snot"
+
+  fun do_badger(): String =>
+    "badger"

@@ -108,8 +108,7 @@ class val PositionIndex
           let entry_before = _index(insert_pos - 1)?
           for candidate in entry_before.candidates() do
             // take the first entry that contains our position
-            let start_pos = entry_before.start
-            let end_pos = candidate.end_pos() as Position
+            (let start_pos, let end_pos) = candidate.span()
 
             Debug("candidate: " + candidate.debug() + " end_pos: " + end_pos.string())
             if (start_pos <= needle.start) and (needle.start <= end_pos) then
@@ -182,6 +181,17 @@ class val PositionIndex
         match parent'.id()
         | TokenIds.tk_tupleelemref() =>
           return parent'
+        end
+      end
+    | TokenIds.tk_call() =>
+      // simple type names are desugared to a call of the form TypeName.create()
+      // with all children of the TK_CALL being at the same position
+      // if we detect this case, we refine to the constructor
+      match node.child()
+      | let child': AST box =>
+        match child'.id()
+        | TokenIds.tk_newref() if node.position() == child'.position() =>
+          return child'
         end
       end
     end

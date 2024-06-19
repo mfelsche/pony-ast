@@ -301,6 +301,7 @@ class \nodoc\ _DefinitionTest is UnitTest
     (Position.create(79, 10), [Position.create(78, 24)], TokenIds.tk_typeparam()) // type param ref
     (Position.create(82, 9), [Position.create(78, 24)], TokenIds.tk_typeparam()) // type ref within a newberef
     (Position.create(87, 5), [Position.create(1, 1)], TokenIds.tk_module()) // package ref
+    (Position.create(97, 9), [Position.create(91, 1)], TokenIds.tk_new()) // reference to constructor for `TypeName` which desugars to `TypeName.create()`
   ]
   fun name(): String => "definition/test"
   fun apply(h: TestHelper) =>
