@@ -11,7 +11,7 @@
     "homepage": "https://github.com/mfelsche/pony-ast",
     "license": "Apache 2.0",
     "documentation_url": "",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "name": "ast"
   }
 }
