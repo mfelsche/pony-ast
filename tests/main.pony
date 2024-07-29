@@ -13,7 +13,8 @@ actor \nodoc\ Main is TestList
     test(_CompileRepeatedly)
     test(_PositionIndexFind)
     test(_DefinitionTest)
-    // test(_FindTypes)
+    test(_EqHashTest)
+
 
 class \nodoc\ iso _CompileSimple is UnitTest
   fun name(): String => "compile/simple"
@@ -79,72 +80,6 @@ class \nodoc\ iso _CompileRepeatedly is UnitTest
       rounds = rounds - 1
     end
 
-// class \nodoc\ iso _FindTypes is UnitTest
-//   let expected: Array[(USize, USize, String val)] val = [
-//     (4, 7, "String val") // field name
-//     (6, 16, "Env val")   // param name
-//     (6, 20, "Env val")   // param type
-//     (7, 6, "String val") // field ref
-//     (9, 11, "String val")  // String type ref
-//     (9, 21, "String ref^") // String.create
-//     (9, 23, "USize val")   // literal int argument to String.create
-//     (9, 24, "USize val")   // literal int argument to String.create
-//   ]
-
-//   fun name(): String => "find-types"
-
-//   fun apply(h: TestHelper) =>
-//     let source_dir = Path.join(Path.dir(__loc.file()), "constructs")
-//     let pony_path =
-//       try
-//         PonyPath(h.env) as String
-//       else
-//         h.fail("PONYPATH not set")
-//         return
-//       end
-//     match Compiler.compile(FilePath(FileAuth(h.env.root), source_dir), [pony_path])
-//     | let p: Program =>
-//       try
-//         let pkg = p.package() as Package
-//         h.assert_eq[String](source_dir, pkg.path)
-//         let main_pony_path = Path.join(source_dir, "main.pony")
-//         try
-//           let module = pkg.find_module(main_pony_path) as Module
-
-//           for (line, column, expected_type) in expected.values() do
-//             match module.find_node_at(line, column)
-//             | let ast: AST box =>
-//               Debug("FOUND " + TokenIds.string(ast.id()))
-//               match Types.get_ast_type(ast)
-//               | let found_type: String =>
-//                 h.assert_eq[String val](expected_type, found_type, "Error at " + line.string() + ":" + column.string())
-//               | None =>
-//                 h.fail("No Type found for node " + TokenIds.string(ast.id()) + " at " + line.string() + ":" + column.string())
-//                 return
-//               end
-//             | None =>
-//               h.fail("No AST node found at " + line.string() + ":" + column.string())
-//               return
-//             end
-
-//           end
-//         else
-//           h.fail("No module with file " + main_pony_path)
-//           return
-//         end
-//       else
-//         h.fail("No package, huh?")
-//         return
-//       end
-//     | let e: Array[Error] =>
-//       h.fail(
-//         "Compiling the constructs example failed with: " +
-//         try
-//           e(0)?.msg + " " + e(0)?.line.string() + ":" + e(0)?.pos.string()
-//         else
-//           "0 errors"
-//         end)
-//     end
 
 class iso _PositionIndexFind is UnitTest
   let expected: Array[(USize, USize, TokenId)] val = [
@@ -359,6 +294,70 @@ class \nodoc\ _DefinitionTest is UnitTest
         h.fail("No package, huh?")
         return
       end
+    | let e: Array[Error] val =>
+      h.fail(
+        "Compiling the constructs example failed with: " +
+        try
+          e(0)?.msg + " " + e(0)?.position.string()
+        else
+          "0 errors"
+        end)
+    end
+
+
+class \nodoc\ _EqHashTest is UnitTest
+  fun name(): String => "eq/hash/test"
+  fun apply(h: TestHelper) =>
+    let source_dir = Path.join(Path.dir(__loc.file()), "constructs")
+    let pony_path =
+      try
+        PonyPath(h.env) as String
+      else
+        h.fail("PONYPATH not set")
+        return
+      end
+    match Compiler.compile(FilePath(FileAuth(h.env.root), source_dir), [pony_path])
+    | let p: Program =>
+      for package in p.packages() do
+        for module in package.modules() do
+          let module_ast: AST box = module.ast
+          module_ast.visit(
+            object is ASTVisitor
+              var _last: (AST box | None) = None
+              fun ref visit(ast: AST box): VisitResult =>
+                match _last
+                | let last: AST box =>
+                  // we test that no literal AST directly reachable via the
+                  // module tree is equal to the last one we visited
+                  h.assert_ne[AST box](last, ast)
+                  h.assert_ne[USize](last.hash(), ast.hash())
+                else
+                  _last = ast
+                end
+                Continue
+            end
+          )
+        end
+      end
+      // assert that a definition found on a reference equals the actual node
+      try
+          let pkg = p.package() as Package
+          let main_pony_path = Path.join(source_dir, "main.pony")
+          let main_module = pkg.find_module(main_pony_path) as Module
+          let index = main_module.create_position_index()
+          let env_ref = index.find_node_at(12, 5) as AST box
+          let env = index.find_node_at(7, 14) as AST box
+          let env_def = env_ref.definitions()(0)?
+          h.assert_eq[AST box](env, env_def, "SAME nodes do not eq")
+
+          try
+            let main_ast = index.find_node_at(4, 7) as AST box
+            let found_main = main_module.ast.find_in_scope("Main") as AST box
+            h.assert_eq[AST box](main_ast, found_main, "SAME MAIN nodes do not eq")
+          end
+        else
+          h.fail("Couldnt get env node")
+        end
     | let e: Array[Error] val =>
       h.fail(
         "Compiling the constructs example failed with: " +

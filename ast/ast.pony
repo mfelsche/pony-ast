@@ -46,7 +46,7 @@ use @ast_index[USize](ast: Pointer[_AST] box)
 primitive _AST
 
 
-class val AST
+class val AST is (Stringable & Hashable & Equatable[AST box])
   """
   Generic AST node for ponyc programs.
 
@@ -361,6 +361,13 @@ class val AST
         ""
       end
     TokenIds.string(id()) + value + " @ " + line().string() + ":" + pos().string() + source_file'
+
+  fun string(): String iso^ =>
+    """
+    Just a quick string method, actually using [debug](#debug), to make AST
+    Stringable.
+    """
+    debug().clone()
 
   fun visit(visitor: ASTVisitor ref): VisitResult =>
     """
@@ -730,6 +737,18 @@ class val AST
     """ 
     DefinitionResolver.resolve(this)
 
+  fun box hash(): USize =>
+    """
+    We use the actual pointer address for hashing
+    """
+    raw.usize()
+
+  fun box eq(other: box->AST box): Bool =>
+    """
+    Equality uses pointer equality of the underlying AST pointer.
+    """
+    this.raw == other.raw
+
 
 interface ASTVisitor
   fun ref visit(ast: AST box): VisitResult
@@ -741,7 +760,7 @@ interface ASTVisitor
   fun ref leave(ast: AST box): VisitResult =>
     """
     Signal that we are done with all the children of this ast node.
-    Return `Continue` if traversing the AST should continue, `Continue` if it should stop.
+    Return `Continue` if traversing the AST should continue, `Stop` if it should stop.
     """
     Continue
 

@@ -1,5 +1,7 @@
 {
-  "packages": [],
+  "packages": [
+    "ast"
+  ],
   "deps": [
     {
       "locator": "github.com/mfelsche/pony-binarysearch.git",
