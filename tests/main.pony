@@ -1,4 +1,3 @@
-use "debug"
 use "files"
 use "pony_test"
 use "../ast"
