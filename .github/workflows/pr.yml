@@ -17,9 +17,8 @@ jobs:
         uses: actions/checkout@v3
       - name: add current ponyc packages dir to PONYPATH
         run: |
-          PONY_LOCATION=$(ponyup show ponyc -b) | awk '{ print $1 }'
+          PONY_LOCATION=$(ponyup show ponyc -b | awk '{ print $1 }')
           echo "PONYPATH=$HOME/.local/share/ponyup/$PONY_LOCATION/packages:$PONYPATH" >> $GITHUB_ENV
-          echo "$PONYPATH"
       - name: tests debug
         run: make test config=debug
       - name: tests release
