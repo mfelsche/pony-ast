@@ -2,12 +2,16 @@ name: PR
 
 on: pull_request
 
+concurrency:
+  group: pr-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test-release-ponyc-linux:
     name: Test against recent ponyc release on Linux
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/ponylang/shared-docker-ci-x86-64-unknown-linux-builder-3.9.1:release
+      image: ghcr.io/ponylang/shared-docker-ci-x86-64-unknown-linux-builder:release
     steps:
       - name: Checkout
         uses: actions/checkout@v3
