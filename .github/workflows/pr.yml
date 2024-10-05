@@ -15,12 +15,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: fix ponyup platform being overwritten by github
+      - name: fix home dir being overwritten by github
         run: |
-          ponyup default x86_64-unknown-linux-musl
+          echo "HOME=/root" >> $GITHUB_ENV
       - name: add current ponyc packages dir to PONYPATH
         run: |
-          ponyup show ponyc -b
           PONY_LOCATION=$(ponyup show ponyc -b | awk '{ print $1 }')
           echo "PONYPATH=$HOME/.local/share/ponyup/$PONY_LOCATION/packages:$PONYPATH" >> $GITHUB_ENV
       - name: tests debug
