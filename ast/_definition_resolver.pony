@@ -1,4 +1,4 @@
-use "debug"
+//use "debug"
 use "assert"
 
 
@@ -16,9 +16,9 @@ primitive DefinitionResolver
     match ttype.id()
     | TokenIds.tk_nominal() =>
         let receiver_def = _data_ast(ttype)(0)?
-        Debug("searching inside definition: " + receiver_def.debug())
+        //Debug("searching inside definition: " + receiver_def.debug())
         let found = receiver_def.find_in_scope(name) as AST
-        Debug("FOUND: " + found.debug())
+        //Debug("FOUND: " + found.debug())
         result.push(found)
         result
     | TokenIds.tk_uniontype() | TokenIds.tk_isecttype() =>
@@ -48,11 +48,11 @@ primitive DefinitionResolver
     | TokenIds.tk_funchain() | TokenIds.tk_bechain() =>
       try
         let receiver = ast.child() as AST
-        Debug("RECEIVER " + receiver.debug() )
+        //Debug("RECEIVER " + receiver.debug() )
         let method = receiver.sibling() as AST
         let method_name = method.token_value() as String
         let receiver_type = receiver.ast_type() as AST
-        Debug("RECEIVER TYPE " + receiver_type.debug())
+        //Debug("RECEIVER TYPE " + receiver_type.debug())
         _find_in_type(receiver_type, method_name, [])?
       else
         []
@@ -74,7 +74,7 @@ primitive DefinitionResolver
           let rhs_id = rhs.token_value() as String
           _find_in_type(lhs_type, rhs_id, [])?
         else
-          Debug("Error resolving field definiton")
+          //Debug("Error resolving field definiton")
           []
         end
       end
@@ -92,7 +92,7 @@ primitive DefinitionResolver
         // further refine the result to point to the tuple elem type definition
         resolve(lhs)
       else
-        Debug("Error resolving tuple element reference")
+        //Debug("Error resolving tuple element reference")
         []
       end
     | TokenIds.tk_packageref() =>
@@ -100,7 +100,7 @@ primitive DefinitionResolver
         let package_alias = (ast.child() as AST).token_value() as String
         // search in the program scope for a package with that name
         // get the program
-        Debug("Searching for package " + package_alias)
+        //Debug("Searching for package " + package_alias)
         var program_ast = ast
         while program_ast.id() != TokenIds.tk_program() do
           program_ast = program_ast.parent() as AST
@@ -108,20 +108,20 @@ primitive DefinitionResolver
         for package_ast in program_ast.children() do
           let package = package_ast.package()()?
           if package.qualified_name() == package_alias then
-            Debug("Found package " + package.qualified_name())
+            //Debug("Found package " + package.qualified_name())
             // return pointer to the first module in the package
             return [package_ast.child() as AST]
           end
         end
         []
       else
-        Debug("Error resolving package reference")
+        //Debug("Error resolving package reference")
         []
       end
     | TokenIds.tk_nominal() =>
       // the definition of the type is set as ast-data in the names pass
       _data_ast(ast)
     else
-      Debug("Dunno how to resolve definition for " + ast.debug())
+      //Debug("Dunno how to resolve definition for " + ast.debug())
       []
     end
