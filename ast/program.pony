@@ -1,4 +1,4 @@
-use "lib:ponyc-standalone" if posix or osx
+use "lib:ponyc-standalone" if not (openbsd or dragonfly)
 // windows is not supported yet
 use "lib:c++" if osx
 use "files"
