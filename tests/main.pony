@@ -1,7 +1,9 @@
+use "collections"
 use "files"
-use "pony_test"
-use "../ast"
 use "itertools"
+use "pony_test"
+
+use "../ast"
 
 actor \nodoc\ Main is TestList
   new create(env: Env) =>
@@ -10,6 +12,7 @@ actor \nodoc\ Main is TestList
   fun tag tests(test: PonyTest) =>
     test(_CompileSimple)
     test(_CompileRepeatedly)
+    test(_CompileErrorTest)
     test(_PositionIndexFind)
     test(_DefinitionTest)
     test(_EqHashTest)
@@ -365,4 +368,82 @@ class \nodoc\ _EqHashTest is UnitTest
         else
           "0 errors"
         end)
+    end
+
+type ExpectedMessage is String
+
+class \nodoc\ _ExpectedCompileErrors
+  let folder: String
+  let expected_errors: Array[(String, Position, ExpectedMessage)]
+
+  new create(folder': String, expected_errors': Array[(String, Position, ExpectedMessage)]) =>
+    folder = folder'
+    expected_errors = expected_errors'
+
+class \nodoc\ _CompileErrorTest is UnitTest
+
+  let expected_errors: Array[_ExpectedCompileErrors] = [
+    _ExpectedCompileErrors("compile_errors_01", [("main.pony", Position.create(5, 25), "can't find definition of 'Badger'")])
+    _ExpectedCompileErrors("compile_errors_02", [
+      ("main.pony", Position.create(5, 17), "this parameter must be sendable (iso, val or tag)")
+    ])
+    _ExpectedCompileErrors("compile_errors_03", [
+      ("main.pony", Position.create(3, 9), "can't find declaration of 'frobnicate'")
+      ("main.pony", Position.create(6, 5), "can't find declaration of 'foo'")
+      ("main.pony", Position.create(6, 9), "left side must be something that can be assigned to")
+    ])
+    _ExpectedCompileErrors("compile_errors_04", [("main.pony", Position.create(1, 5), "Literal doesn't terminate")])
+  ]
+
+  fun name(): String => "compile/errors"
+  fun apply(h: TestHelper)? =>
+    let pony_path =
+      try
+        PonyPath(h.env) as String
+      else
+        h.fail("PONYPATH not set")
+        return
+      end
+
+    for expected_errs in this.expected_errors.values() do
+      let source_dir = Path.join(Path.dir(__loc.file()), expected_errs.folder)
+
+      match Compiler.compile(FilePath(FileAuth(h.env.root), source_dir), [pony_path])
+      | let p: Program =>
+        h.fail("Program successfully compiled, although we expected it to fail")
+      | let e: Array[Error] val =>
+        h.assert_eq[USize](
+          e.size(), expected_errs.expected_errors.size(),
+          "Expected " + expected_errs.expected_errors.size().string() + " Errors, got " + e.size().string()
+        )
+        for i in Range(0, e.size()) do
+          let err = e(i)?
+          (let expected_file, let expected_position, let expected_message) = expected_errs.expected_errors(i)?
+          h.assert_true(
+            err.file isnt None,
+            "Error has no file"
+          )
+          h.assert_eq[String](
+            Path.base(err.file as String),
+            expected_file,
+            "Error file " +
+              (err.file as String) +
+              " does not match expected file " +
+              expected_file
+          )
+          h.assert_eq[Position](
+            err.position,
+            expected_position,
+            "Error position " +
+              err.position.string() +
+              " does not match expected position " +
+              expected_position.string()
+          )
+          h.assert_eq[String](
+            err.msg,
+            expected_message,
+            "Error message \"" + err.msg + "\" doesn't match expected message \"" + expected_message + "\""
+          )
+        end
+      end
     end
