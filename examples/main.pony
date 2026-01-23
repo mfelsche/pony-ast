@@ -5,4 +5,8 @@ actor Main
 
   fun ref none(param: String = "foo"): Main =>
     [as U8:]
+    this.bla()
+    bla()
     this
+
+  fun bla(): Bool => true
