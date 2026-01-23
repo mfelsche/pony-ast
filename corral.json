@@ -5,7 +5,7 @@
   "deps": [
     {
       "locator": "github.com/mfelsche/pony-binarysearch.git",
-      "version": "v0.1.1"
+      "version": "v0.2.0"
     }
   ],
   "info": {
@@ -13,7 +13,7 @@
     "homepage": "https://github.com/mfelsche/pony-ast",
     "license": "Apache 2.0",
     "documentation_url": "",
-    "version": "0.3.0",
+    "version": "0.3.2",
     "name": "ast"
   }
 }
