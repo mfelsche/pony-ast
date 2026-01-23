@@ -97,7 +97,7 @@ class Matching
     | _Snot =>
       do_snot()
     | _Badger =>
-      do_badger()
+      this.do_badger()
     end
 
   fun do_snot(): String =>
