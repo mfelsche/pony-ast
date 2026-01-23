@@ -239,6 +239,9 @@ class \nodoc\ _DefinitionTest is UnitTest
     (Position.create(82, 9), [Position.create(78, 24)], TokenIds.tk_typeparam()) // type ref within a newberef
     (Position.create(87, 5), [Position.create(1, 1)], TokenIds.tk_module()) // package ref
     (Position.create(97, 9), [Position.create(91, 1)], TokenIds.tk_new()) // reference to constructor for `TypeName` which desugars to `TypeName.create()`
+    (Position.create(98, 7), [Position.create(103, 3)], TokenIds.tk_fun()) // reference to method of the own type
+    (Position.create(100, 8), [Position.create(94, 1)], TokenIds.tk_class()) // this reference
+    (Position.create(100, 12), [Position.create(106, 3)], TokenIds.tk_fun()) // method refered to via this.method_name
   ]
   fun name(): String => "definition/test"
   fun apply(h: TestHelper) =>
