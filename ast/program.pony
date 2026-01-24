@@ -58,4 +58,3 @@ class val Program
     if not ast.raw.is_null() then
       @ast_free(ast.raw)
     end
-
