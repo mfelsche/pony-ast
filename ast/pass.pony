@@ -90,4 +90,3 @@ struct _PassOpt
   var data: Pointer[None] ref = data.create() // user-defined data for unit test callbacks
 
   new ref create() => None
-
