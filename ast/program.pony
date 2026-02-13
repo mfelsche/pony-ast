@@ -11,18 +11,14 @@ use @printf[None](s: Pointer[U8] tag, ...)
 
 struct _Program
 
-primitive VerbosityLevels
-  fun quiet(): I32 => 0
+type VerbosityLevel is (VerbosityQuiet | VerbosityMinimal | VerbosityInfo |
+VerbosityToolInfo | VerbosityAll)
 
-  fun minimal(): I32 => 1
-
-  fun info(): I32 => 2
-
-  fun tool_info(): I32 => 3
-
-  fun all(): I32 => 4
-
-type VerbosityLevel is I32
+primitive VerbosityQuiet fun apply(): I32 => 0
+primitive VerbosityMinimal fun apply(): I32 => 1
+primitive VerbosityInfo fun apply(): I32 => 2
+primitive VerbosityToolInfo fun apply(): I32 => 3
+primitive VerbosityAll fun apply(): I32 => 4
 
 class val Program
   let ast: AST
