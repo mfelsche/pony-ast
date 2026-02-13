@@ -11,10 +11,10 @@ jobs:
     name: Test against recent ponyc release on Linux
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/ponylang/shared-docker-ci-x86-64-unknown-linux-builder:release
+      image: ghcr.io/ponylang/shared-docker-ci-standard-builder:release
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.1.1
       - name: fix home dir being overwritten by github
         run: |
           echo "HOME=/root" >> $GITHUB_ENV
