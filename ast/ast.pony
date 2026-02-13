@@ -290,7 +290,7 @@ class val AST is (Stringable & Hashable & Equatable[AST box])
   fun get(name: String box): (AST | None) =>
     """
     Wrapper around libponyc function `ast_get`
-    
+
     Searching the scope of this AST and all the upper scopes
     for an AST node with the given name.
 
@@ -606,7 +606,7 @@ class val AST is (Stringable & Hashable & Equatable[AST box])
         // we need to do some complex parsing
         // to get the actual string width including quotes
         let src = (source_contents() as String box)
-        var offset = 
+        var offset =
           if l == 1 then
             col - 1
           else
@@ -630,13 +630,13 @@ class val AST is (Stringable & Hashable & Equatable[AST box])
         while true do
           // check for \" escapes
           match c
-          | '\\' => 
+          | '\\' =>
             // ignore next char and advance
             offset = offset + 1
             c = src(offset)?
             end_col = end_col + 1
             end_quotes = 0
-          | '\n' => 
+          | '\n' =>
             end_line = end_line + 1
             end_col = 1
             end_quotes = 0
@@ -678,7 +678,7 @@ class val AST is (Stringable & Hashable & Equatable[AST box])
       | TokenIds.tk_float() =>
         // float parsing
         let src = source_contents() as String box
-        let start_offset: USize = 
+        let start_offset: USize =
           if l == 1 then
             col - 1
           else
@@ -737,7 +737,7 @@ class val AST is (Stringable & Hashable & Equatable[AST box])
     Return the definitions of the current node,
     if applicable. Usually there is only one,
     but it is possible to have multiple in some cases.
-    """ 
+    """
     DefinitionResolver.resolve(this)
 
   fun box hash(): USize =>

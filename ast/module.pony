@@ -29,14 +29,14 @@ class val Module is (Hashable & Equatable[Module])
     file = recover val String.copy_cstring(f_ptr) end
     len = source.len
     _hash = @ponyint_hash_block(source.m, len)
-  
+
   fun val create_position_index(): PositionIndex val =>
     PositionIndex.create(this)
 
   fun box hash(): USize =>
     """Return a hash of the file contents"""
     _hash
-    
+
   fun eq(that: box->Module): Bool =>
     """
     Two modules are considered equal if they are from the same file
@@ -311,4 +311,3 @@ class ref _Entry is Comparable[_Entry]
     delegated to Position
     """
     start < other.start
-
